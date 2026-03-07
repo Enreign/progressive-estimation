@@ -42,7 +42,13 @@ Research-backed formulas. PERT statistics. Calibration feedback loops. Zero depe
 
 ### Install
 
-**Claude Code** (recommended — full progressive loading):
+**One command** (via [skills.sh](https://skills.sh) — works with Claude Code, Cursor, Codex, and 37+ agents):
+
+```bash
+npx skills add Enreign/progressive-estimation
+```
+
+**Claude Code** (manual — full progressive loading):
 
 ```bash
 git clone https://github.com/Enreign/progressive-estimation.git ~/.claude/skills/progressive-estimation
