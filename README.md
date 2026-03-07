@@ -290,8 +290,16 @@ progressive-estimation/
 ├── SKILL.md                    Workflow map (loaded first, always)
 ├── INSTALLATION.md             Setup guide for 9 AI coding clients
 ├── DISCLAIMER.md               Honest limitations of estimation
+├── CONTRIBUTING.md             How to contribute
+├── CODE_OF_CONDUCT.md          Community guidelines
 ├── README.md
 ├── LICENSE                     MIT
+├── .github/
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md
+│       ├── feature_request.md
+│       └── calibration_data.md
 ├── references/
 │   ├── questionnaire.md        Progressive intake (phase 1)
 │   ├── frameworks.md           Round-based, module/wave, S-M-L (phase 2)
@@ -341,7 +349,7 @@ Run evals after any change to formulas, frameworks, or the skill workflow.
 
 ## Contributing
 
-Contributions welcome. Key areas:
+Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Key areas:
 
 - **Calibration data** — Share anonymized estimated vs. actual results to improve default ratios
 - **Tracker mappings** — Additional tracker support (Asana, Notion, Shortcut, etc.)
@@ -350,6 +358,8 @@ Contributions welcome. Key areas:
 - **Evals** — Additional test cases, especially edge cases
 
 Please include research citations or empirical data when proposing formula changes.
+
+This project follows a [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ---
 

@@ -59,3 +59,13 @@ feedback loops. The most important thing you can do is:
 
 No formula will ever replace this cycle. This skill gives you the
 structure; your data makes it accurate.
+
+## Legal Disclaimer
+
+This software ("Progressive Estimation") is provided "as is" without warranty
+of any kind, express or implied, including but not limited to the warranties
+of merchantability, fitness for a particular purpose, and non-infringement.
+In no event shall Stanislav Shymanskyi or the authors be liable for any claim,
+damages, or other liability, whether in an action of contract, tort, or
+otherwise, arising from, out of, or in connection with the software or the
+use or other dealings in the software.
