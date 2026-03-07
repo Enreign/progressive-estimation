@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/banner.png" alt="Progressive Estimation" width="838" />
+
 # Progressive Estimation
 
 **An AI skill for estimating AI-assisted and hybrid human+agent development work.**
