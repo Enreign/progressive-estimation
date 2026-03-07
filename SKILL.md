@@ -1,3 +1,12 @@
+---
+name: progressive-estimation
+description: An AI skill for estimating AI-assisted and hybrid human+agent development work. Research-backed formulas with PERT statistics, confidence bands, calibration feedback loops, and zero dependencies. Triggers on estimation, effort sizing, story points, how long, agent time, and staffing planning.
+license: MIT
+metadata:
+  author: Enreign
+  version: "0.1.0"
+---
+
 # Progressive Estimation
 
 > Estimate AI-assisted and hybrid human+agent work with progressive disclosure.
