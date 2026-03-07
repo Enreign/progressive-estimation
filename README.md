@@ -2,13 +2,18 @@
 
 # Progressive Estimation
 
-**A Claude Code skill for estimating AI-assisted and hybrid human+agent development work.**
+**An AI skill for estimating AI-assisted and hybrid human+agent development work.**
 
 Research-backed formulas. PERT statistics. Calibration feedback loops. Zero dependencies.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Status: Early Development](https://img.shields.io/badge/Status-Early%20Development-orange.svg)]()
-[![Claude Code Skill](https://img.shields.io/badge/Claude%20Code-Skill-blueviolet.svg)]()
+[![Claude Code](https://img.shields.io/badge/Claude%20Code-blueviolet.svg)]()
+[![Cursor](https://img.shields.io/badge/Cursor-blue.svg)]()
+[![Copilot](https://img.shields.io/badge/GitHub%20Copilot-black.svg)]()
+[![Windsurf](https://img.shields.io/badge/Windsurf-teal.svg)]()
+[![Cline](https://img.shields.io/badge/Cline-green.svg)]()
+[![Aider](https://img.shields.io/badge/Aider-orange.svg)]()
 
 </div>
 
@@ -35,13 +40,17 @@ Research-backed formulas. PERT statistics. Calibration feedback loops. Zero depe
 
 ### Install
 
+**Claude Code** (recommended — full progressive loading):
+
 ```bash
 git clone https://github.com/Enreign/progressive-estimation.git ~/.claude/skills/progressive-estimation
 ```
 
+**Other clients:** See the full [Installation Guide](INSTALLATION.md) for setup instructions for **Cursor, GitHub Copilot, Windsurf, Cline, Aider, Continue.dev, ChatGPT, and Gemini Code Assist**.
+
 ### Use
 
-In Claude Code, just ask for an estimate:
+In your AI coding client, just ask for an estimate:
 
 ```
 Estimate: "Add Stripe payment integration to our checkout flow"
@@ -59,6 +68,12 @@ Estimate these tasks:
 ```
 
 The skill auto-triggers on keywords like *estimate*, *how long*, *effort*, *sizing*, *story points*.
+
+> [!TIP]
+> Works with **any AI coding client** that supports custom instructions.
+> Claude Code, Cursor, and GitHub Copilot get progressive loading (files
+> load on demand). All others work with the full skill loaded at once.
+> See [INSTALLATION.md](INSTALLATION.md) for your client.
 
 ---
 
@@ -273,6 +288,7 @@ See [references/calibration.md](references/calibration.md) for the full system.
 ```
 progressive-estimation/
 ├── SKILL.md                    Workflow map (loaded first, always)
+├── INSTALLATION.md             Setup guide for 9 AI coding clients
 ├── DISCLAIMER.md               Honest limitations of estimation
 ├── README.md
 ├── LICENSE                     MIT
