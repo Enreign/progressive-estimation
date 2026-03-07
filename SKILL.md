@@ -23,11 +23,19 @@ Use when a user wants time/effort estimates for:
 
 Keywords: estimate, how long, effort, sizing, story points, rounds, agent time
 
+## Interaction
+
+When asking questionnaire questions, use the `AskUserQuestion` tool if available
+in your environment. This creates a structured back-and-forth flow instead of
+dumping all questions at once. Ask one question at a time and wait for the
+response before proceeding. If the tool is not available, fall back to
+conversational questions in your text output.
+
 ## Workflow
 
 ### Phase 0: Mode Selection
 
-Ask two questions upfront:
+Ask two questions upfront (one at a time):
 
 1. **Speed**: "Quick estimate with sensible defaults, or detailed walkthrough?"
 2. **Scope**: "Single task or batch of tasks?"
