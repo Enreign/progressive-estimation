@@ -18,7 +18,7 @@ and works best here — files load on demand per phase.
 
 ```bash
 # Clone into your skills directory
-git clone https://github.com/Enreign/progressive-estimation.git ~/.claude/skills/progressive-estimation
+git clone https://github.com/Enreign/agent-skills.git ~/.claude/skills/agent-skills
 ```
 
 That's it. The skill auto-triggers when you ask for estimates. You can also
