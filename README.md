@@ -147,6 +147,29 @@ Agent Rounds x Minutes per Round
 
 ---
 
+## Roadmap
+
+Skills for hybrid agent-human development workflows. Built for teams where humans direct and agents execute.
+
+| # | Skill | Description | Status |
+|---|-------|-------------|--------|
+| 1 | **Progressive Estimation** | Estimate tasks with PERT statistics, confidence bands, and agent effectiveness decay | Done |
+| 2 | **Task Decomposition** | Break epics into agent-sized chunks with dependency graphs and parallel lanes | Planned |
+| 3 | **Handoff Protocol** | Structured context handoffs between sessions, agents, and humans — what's done, what's left, what's blocked | Planned |
+| 4 | **Code Review Checklist** | Review agent-generated code for hallucinated APIs, security issues, over-engineering, and missing edge cases | Planned |
+| 5 | **Sprint Planner** | Plan sprints with mixed human+agent capacity, parallel lanes, critical path, and slack | Planned |
+| 6 | **Context Curator** | Build minimal, relevant context packages for agents — right files, right docs, less hallucination | Planned |
+| 7 | **Agent Task Router** | Classify backlog tasks as agent-solo, human-agent pair, or human-only based on complexity and risk | Planned |
+| 8 | **Decision Log** | Record architectural decisions with context and rationale so agents don't re-litigate past choices | Planned |
+| 9 | **Release Notes Generator** | Generate structured changelogs from git history, PRs, and issues with breaking change detection | Planned |
+| 10 | **Migration Planner** | Plan staged migrations with rollback strategy, data validation checkpoints, and canary criteria | Planned |
+| 11 | **Retrospective Analyzer** | Compare estimates vs actuals, detect bias patterns, and suggest formula adjustments | Planned |
+| 12 | **Incident Debugger** | Structured debugging: triage, reproduce, root cause, fix, post-mortem — agents analyze, humans decide | Planned |
+
+Have an idea for a skill? [Open an issue](https://github.com/Enreign/agent-skills/issues).
+
+---
+
 ## File Structure
 
 ```
