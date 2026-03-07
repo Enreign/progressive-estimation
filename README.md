@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="assets/banner.png" alt="Agent Skills by Enreign" width="838" />
-
 # Agent Skills
 
 **A collection of AI skills for modern development workflows.**
@@ -16,6 +14,14 @@
 [![Aider](https://img.shields.io/badge/Aider-orange.svg)]()
 
 </div>
+
+---
+
+> [!WARNING]
+> **Early development.** Skills in this repo are actively developed and may change frequently. Expect rough edges, incomplete calibration, and breaking changes between versions. Bug reports, calibration data, and PRs are welcome.
+
+> [!NOTE]
+> **Estimation is one of the hardest problems in software engineering.** A database migration might take 2 days for a small app or 2 years for a large enterprise system. Meanwhile, small tasks that once took hours can now be completed in minutes with modern AI tools. These skills give you structure and consistency — not certainty. See [DISCLAIMER.md](DISCLAIMER.md) for the full picture.
 
 ---
 
