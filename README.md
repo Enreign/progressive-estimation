@@ -1,5 +1,10 @@
 # Progressive Estimation
 
+> **Early Development Notice:** This skill is under active development. Formulas,
+> multipliers, and default values are being calibrated and may change between
+> versions. We welcome feedback, calibration data, and contributions to help
+> stabilize the estimation model. Use in production planning at your own discretion.
+
 A Claude Code skill for estimating AI-assisted and hybrid human+agent development work.
 
 Research-backed formulas. PERT statistics. Calibration feedback loops. Zero dependencies.
