@@ -4,7 +4,7 @@ description: An AI skill for estimating AI-assisted and hybrid human+agent devel
 license: MIT
 metadata:
   author: Enreign
-  version: "0.1.0"
+  version: "0.1.1"
 ---
 
 # Progressive Estimation
