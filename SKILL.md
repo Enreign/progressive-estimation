@@ -1,6 +1,6 @@
 ---
 name: progressive-estimation
-description: "Story points don't work when agents do half the coding. This skill estimates hybrid human+agent work with research-backed formulas, confidence bands, and a calibration loop that improves accuracy over time."
+description: "Adapts to your team's working mode — human-only, hybrid, or agent-first — with research-backed formulas, confidence bands, and the right velocity model for each."
 license: MIT
 metadata:
   author: Enreign
@@ -81,6 +81,26 @@ organization context, and per-task dependency mapping.
 
 Every question feeds a specific formula variable — see the mapping table in
 questionnaire.md for the complete wiring.
+
+### Phase 1.5: Cooperation Mode Detection (Automatic)
+
+Auto-detect the team's cooperation mode from intake answers:
+
+```
+if num_agents == 0 → Human-only mode
+if num_agents > 0 AND maturity in [exploratory, partial] → Hybrid mode
+if num_agents > 0 AND maturity == mostly-automated → Agent-first mode
+```
+
+Announce the detected mode before proceeding:
+
+| Mode | Announcement | Points Approach |
+|------|-------------|----------------|
+| Human-only | "Detected: human-only team. Using standard estimation with story points." | Points for sizing and velocity |
+| Hybrid | "Detected: hybrid team. Using dual-track estimation — points for sizing, hours for planning." | Dual-track: points + hours |
+| Agent-first | "Detected: agent-first team. Planning by human review capacity in hours." | Hours only; points optional for rough sizing |
+
+This mode affects output format (Phase 4) and calibration recommendations (Phase 5).
 
 ### Phase 2: Framework Selection
 
@@ -194,6 +214,7 @@ Suggest re-estimation when:
 | Phase | Files Loaded | When |
 |-------|-------------|------|
 | 0-1 | questionnaire.md | Always (intake); skipped in Instant mode |
+| 1.5 | (no files) | Automatic after intake |
 | 2 | frameworks.md | After intake |
 | 3 | formulas.md | During computation |
 | 3.5 | calibration.md (reference stories) | Automatic for M+ tasks (council validation) |

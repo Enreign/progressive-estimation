@@ -306,10 +306,13 @@ Present estimates in the most readable unit:
 - Over 16 hours: show days (assuming 8-hour workday, e.g., "2-4 days")
 - Over 2 weeks: show weeks (e.g., "2-4 weeks")
 
-## Story Points (Optional)
+## Story Points (Mode-Aware)
 
-Some teams prefer story points over time estimates. Provide this mapping
-only when explicitly requested, with a warning.
+Story point guidance adapts to the detected cooperation mode.
+
+### Human-Only Mode
+
+Standard story points work well. Use for both sizing and velocity tracking.
 
 ```
 S  = 1-2 points
@@ -318,8 +321,48 @@ L  = 8-13 points
 XL = 20-40 points
 ```
 
-Warning: "Story points measure relative complexity, not time. This mapping
-is a starting reference — calibrate with your team's actual velocity."
+Velocity in points/sprint is stable and predictable. Plan sprints by filling to velocity.
+
+### Hybrid Mode (Dual-Track)
+
+Use points for **relative sizing and prioritization only**. Use hours for **sprint planning and velocity**.
+
+```
+S  = 1-2 points
+M  = 3-5 points
+L  = 8-13 points
+XL = 20-40 points
+```
+
+Track two velocities each sprint:
+- **Points velocity**: points completed (useful for trend)
+- **Hours velocity**: hours completed (useful for planning)
+
+When points velocity rises but hours velocity is flat, the team has hit its
+human review ceiling — agents are producing more, but humans can't review faster.
+
+Warning: "In hybrid teams, story points measure complexity but not delivery
+speed. A 5-point task may take 8 hours without an agent or 2 hours with one.
+Plan sprints in hours."
+
+### Agent-First Mode
+
+Do not use points for velocity — it produces meaningless noise. Optionally
+use points for rough relative sizing ("is this bigger than that?").
+
+Plan sprints by human review capacity:
+
+```
+available_capacity = review_hours_per_sprint × tasks_per_review_hour
+```
+
+The bottleneck is human review throughput, not task complexity. Track agent
+rounds separately to optimize agent configuration, but plan sprints by
+human hours.
+
+Warning: "In agent-first teams, velocity in story points is unreliable
+because agent throughput varies wildly by task type. Plan by human review
+capacity instead."
 
 ## Batch Rollup
 

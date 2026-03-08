@@ -184,27 +184,45 @@ bias_direction = sign(avg_deviation)  # positive = consistently under-estimating
 
 ## Sprint Velocity Tracking
 
-Track velocity in **hours** (not story points) to stay consistent with PERT
-output and avoid the story-point-to-time conversion trap.
+Sprint velocity tracking adapts to the detected cooperation mode:
+- **Human-only**: velocity in story points (standard scrum)
+- **Hybrid**: dual-track — points for trend, hours for planning
+- **Agent-first**: velocity in human review hours only
 
-### Completed Hours per Sprint
+### Logging Sprint Data
 
-Track estimated vs actual hours completed each sprint:
+Track sprint data in the format matching your cooperation mode:
 
+**Human-only:**
+```
+sprint_log:
+  - sprint: "2026-S1"
+    completed_points: 34
+    planned_points: 40
+    team_size: 4
+```
+
+**Hybrid (dual-track):**
+```
+sprint_log:
+  - sprint: "2026-S1"
+    completed_points: 34
+    completed_hours: 38
+    planned_hours: 40
+    team_size: 4
+    agents: 2
+```
+
+**Agent-first:**
 ```
 sprint_log:
   - sprint: "2026-S1"
     completed_hours: 34
+    review_hours: 22
+    agent_rounds: 340
     planned_hours: 40
-    team_size: 4
-  - sprint: "2026-S2"
-    completed_hours: 38
-    planned_hours: 38
-    team_size: 4
-  - sprint: "2026-S3"
-    completed_hours: 28
-    planned_hours: 36
-    team_size: 3  # someone was out
+    team_size: 2
+    agents: 4
 ```
 
 ### Rolling Velocity Average
@@ -212,7 +230,15 @@ sprint_log:
 Compute rolling velocity over the last 3-5 sprints:
 
 ```
-rolling_velocity = mean(last_n_sprints.completed_hours)  # n = 3 to 5
+# Human-only
+rolling_velocity = mean(last_n_sprints.completed_points)
+
+# Hybrid (use hours for planning)
+rolling_velocity_hrs = mean(last_n_sprints.completed_hours)
+rolling_velocity_pts = mean(last_n_sprints.completed_points)  # for trend only
+
+# Agent-first
+rolling_velocity = mean(last_n_sprints.review_hours)
 ```
 
 Use the last 3 sprints for fast-changing teams, last 5 for stable teams.
@@ -220,7 +246,14 @@ Use the last 3 sprints for fast-changing teams, last 5 for stable teams.
 ### Capacity Planning Formula
 
 ```
-available_hours = rolling_velocity × (1 - buffer%)
+# Human-only
+available_points = rolling_velocity × (1 - buffer%)
+
+# Hybrid
+available_hours = rolling_velocity_hrs × (1 - buffer%)
+
+# Agent-first
+available_review_hours = rolling_velocity × (1 - buffer%)
 ```
 
 Default buffer: **20%** (accounts for unplanned work, bugs, meetings).
@@ -236,8 +269,14 @@ Default buffer: **20%** (accounts for unplanned work, bugs, meetings).
 When batch estimating, compare total estimated hours against available capacity:
 
 ```
-total_estimated = sum(task_committed_hours)
-fit_ratio = total_estimated / available_hours
+# Human-only: compare points
+fit_ratio = sum(task_points) / available_points
+
+# Hybrid: compare hours (the real constraint)
+fit_ratio = sum(task_committed_hours) / available_hours
+
+# Agent-first: compare review hours
+fit_ratio = sum(task_review_hours) / available_review_hours
 ```
 
 | Fit Ratio | Status | Action |
@@ -247,9 +286,9 @@ fit_ratio = total_estimated / available_hours
 | 1.0 - 1.2 | Tight | Flag risk, identify deferrable tasks |
 | > 1.2 | Overflow | Must cut scope or split across sprints |
 
-Warn on overflow: "Estimated total ({total_estimated} hrs) exceeds sprint
-capacity ({available_hours} hrs). Consider deferring {overflow} hrs of
-lower-priority work."
+Warn on overflow: "Estimated total exceeds sprint capacity. Consider deferring
+lower-priority work." (The units adapt to cooperation mode: points, hours, or
+review hours.)
 
 ### Velocity Trend Detection
 
@@ -267,19 +306,38 @@ trend_ratio = recent_avg / previous_avg
 | 0.90 - 1.10 | Stable | Predictable velocity |
 | < 0.90 | Declining | Investigate — burnout, tech debt, team changes? |
 
+### Divergence Detection (Hybrid Mode Only)
+
+In hybrid teams, track whether points velocity and hours velocity move together:
+
+```
+pts_trend = rolling_velocity_pts / previous_rolling_velocity_pts
+hrs_trend = rolling_velocity_hrs / previous_rolling_velocity_hrs
+divergence = pts_trend - hrs_trend
+```
+
+| Divergence | Meaning | Action |
+|-----------|---------|--------|
+| < 0.1 | Aligned | Points and hours moving together — healthy |
+| 0.1 - 0.2 | Mild divergence | Agents taking on more, monitor review load |
+| > 0.2 | Review bottleneck | Points velocity outpacing hours — humans can't keep up with agent output. Add reviewers or reduce agent parallelism. |
+
 ### Integration with Batch Estimation
 
 When batch estimating a sprint's worth of work, append a sprint fit summary:
 
 ```
-Sprint Fit Summary
-  Rolling velocity (3-sprint avg): 33 hrs
+Sprint Fit Summary (Hybrid Mode)
+  Points velocity (3-sprint avg): 35 pts
+  Hours velocity (3-sprint avg): 33 hrs
   Buffer: 20%
   Available capacity: 26.4 hrs
   Total estimated (committed 80%): 29 hrs
   Fit ratio: 1.10 (Tight)
-  Velocity trend: Stable
-  Warning: Consider deferring ~2.6 hrs of lower-priority work
+  Hours trend: Stable
+  Points trend: Improving (+12%)
+  ⚠ Divergence detected — points rising faster than hours. Review capacity may be the bottleneck.
+  ⚠ Consider deferring ~2.6 hrs of lower-priority work.
 ```
 
 ## Team-Specific Profiles

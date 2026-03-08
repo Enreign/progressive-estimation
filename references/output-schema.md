@@ -12,6 +12,30 @@ Every estimate output follows this order:
 6. **Tracker-formatted block** — if tracker specified
 7. **Subtasks** — if applicable
 
+## Cooperation Mode Output Adaptation
+
+Output format adapts to the detected cooperation mode:
+
+### Human-Only Mode
+- Show story points prominently alongside hours
+- One-line summary includes points: `Expected: ~4 hrs (5 pts) | ...`
+- Sprint fit in points
+- Velocity recommendation: "Track velocity in story points."
+
+### Hybrid Mode
+- Show both points and hours, clearly labeled
+- One-line summary: `Expected: ~4 hrs | 5 pts (sizing only) | ...`
+- Sprint fit in hours (the real constraint)
+- Add note: "Points are for sizing and prioritization. Plan sprints in hours."
+- If batch: show divergence warning if applicable
+
+### Agent-First Mode
+- Lead with hours, suppress points unless requested
+- One-line summary: `Expected: ~70 min (~22 min review) | ...`
+- Include review hours as a separate line in breakdown
+- Sprint fit in review hours
+- Velocity recommendation: "Track velocity in human review hours."
+
 ### One-Line Summary Format
 
 Single task:
