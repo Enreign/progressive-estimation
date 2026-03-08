@@ -4,7 +4,7 @@ description: "Adapts to your team's working mode — human-only, hybrid, or agen
 license: MIT
 metadata:
   author: Enreign
-  version: "0.1.1"
+  version: "0.3.0"
 ---
 
 # Progressive Estimation
