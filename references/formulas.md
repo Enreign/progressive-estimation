@@ -292,7 +292,7 @@ After computing estimates, check for these patterns and append warnings:
 
 | Pattern | Warning |
 |---------|---------|
-| Complexity = XL | "Consider breaking this into smaller tasks for more accurate estimation." |
+| Complexity = XL | "XL estimates are directional only — the round-based model cannot capture emergent complexity at this scale. Break into L or smaller tasks before committing to deadlines." |
 | Total > 2 weeks | "This estimate has high uncertainty (Cone of Uncertainty). Consider phased delivery with re-estimation at each phase." |
 | Spread ratio (max/min) > 3 | "Wide estimate range indicates high uncertainty. Consider decomposing or running a timeboxed investigation first." |
 | Definition phase = concept | "Concept-phase estimates can be off by 2-4x. Narrow the scope before committing to deadlines." |
