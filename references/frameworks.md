@@ -123,7 +123,7 @@ For quick sizing when you have a list of tasks without detailed specs.
 These are baseline ranges at partial maturity, 1 human + 1 agent, risk 1.0,
 coding task type (1.0x), solo/startup org. For other contexts, apply multipliers:
 
-- Task type: data-migration 2.0x, infrastructure 1.5x, testing 1.3x, bug-fix 1.2x, design 1.2x
+- Task type: data-migration 2.0x, infrastructure 1.5x, testing 1.3x, bug-fix 1.3x, design 1.2x
 - Org size: growth 1.15x (human time), enterprise 1.3x (human time)
 - Confidence: 50% use 1.0x, 90% use 1.8x
 

@@ -1,0 +1,244 @@
+name: Auto-Estimate Issue
+description: >
+  Estimates issue complexity using progressive-estimation formulas and posts
+  the result as an issue comment. Runs when issues are labeled `needs-estimate`.
+
+inputs:
+  github-token:
+    description: GitHub token with issues write permission
+    required: true
+  issue-number:
+    description: Issue number to estimate
+    required: true
+  issue-title:
+    description: Issue title
+    required: true
+  issue-body:
+    description: Issue body / description
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Estimate issue complexity
+      id: estimate
+      shell: bash
+      env:
+        ISSUE_TITLE: ${{ inputs.issue-title }}
+        ISSUE_BODY: ${{ inputs.issue-body }}
+      run: |
+        # ---------------------------------------------------------------
+        # Simplified progressive-estimation: instant mode
+        # Infers complexity from title + body, applies core PERT formulas,
+        # and outputs a size label + estimate comment.
+        # ---------------------------------------------------------------
+
+        title="$ISSUE_TITLE"
+        body="$ISSUE_BODY"
+        text="$title $body"
+        text_lower=$(echo "$text" | tr '[:upper:]' '[:lower:]')
+        char_count=${#text}
+
+        # ----- Infer task type from keywords -----
+        task_type="coding"
+        task_type_multiplier="1.0"
+
+        if echo "$text_lower" | grep -qE 'bug|fix|crash|regression|broken|error'; then
+          task_type="bug-fix"
+          task_type_multiplier="1.2"
+        elif echo "$text_lower" | grep -qE 'investigate|research|spike|explore|analysis|evaluate'; then
+          task_type="investigation"
+          task_type_multiplier="0.5"
+        elif echo "$text_lower" | grep -qE 'infra|ci/cd|deploy|pipeline|terraform|docker|k8s|kubernetes|helm'; then
+          task_type="infrastructure"
+          task_type_multiplier="1.5"
+        elif echo "$text_lower" | grep -qE 'test|e2e|coverage|spec|cypress|playwright'; then
+          task_type="testing"
+          task_type_multiplier="1.3"
+        elif echo "$text_lower" | grep -qE 'migrat|etl|data.?transfer|schema.?change'; then
+          task_type="data-migration"
+          task_type_multiplier="2.0"
+        elif echo "$text_lower" | grep -qE 'design|mockup|figma|ui/ux|wireframe'; then
+          task_type="design"
+          task_type_multiplier="1.2"
+        fi
+
+        # ----- Infer complexity from description length + keywords -----
+        complexity="M"
+        xl_keywords="epic|large.?scale|full.?rewrite|redesign|overhaul|migration|multi.?service|cross.?team"
+        l_keywords="refactor|multiple.?components|complex|several|integration|multi|significant"
+        s_keywords="typo|rename|one.?liner|trivial|small|minor|simple.?fix|tweak|bump"
+
+        if echo "$text_lower" | grep -qE "$xl_keywords" || [ "$char_count" -gt 2000 ]; then
+          complexity="XL"
+        elif echo "$text_lower" | grep -qE "$l_keywords" || [ "$char_count" -gt 1000 ]; then
+          complexity="L"
+        elif echo "$text_lower" | grep -qE "$s_keywords" && [ "$char_count" -lt 300 ]; then
+          complexity="S"
+        fi
+
+        # ----- Lookup tables (from formulas.md) -----
+        case "$complexity" in
+          S)  base_min=3;  base_max=8;   agent_eff="0.9"; review_min=30;  plan_min=15;  plan_max=30;  ;;
+          M)  base_min=8;  base_max=20;  agent_eff="0.7"; review_min=60;  plan_min=30;  plan_max=60;  ;;
+          L)  base_min=20; base_max=50;  agent_eff="0.5"; review_min=120; plan_min=60;  plan_max=180; ;;
+          XL) base_min=50; base_max=120; agent_eff="0.3"; review_min=240; plan_min=120; plan_max=480; ;;
+        esac
+
+        # Defaults: partial maturity, standard review, 80% confidence, ready phase
+        min_per_round_min=2
+        min_per_round_max=3
+        risk_coeff="1.3"
+        domain_fam="1.0"
+        integration_overhead="0.15"
+        human_fix_ratio="0.20"
+        confidence_mult="1.4"
+
+        # ----- Step 1: Agent rounds -----
+        adj_rounds_min=$(echo "$base_min * $risk_coeff * $domain_fam" | bc | cut -d. -f1)
+        adj_rounds_max=$(echo "$base_max * $risk_coeff * $domain_fam" | bc | cut -d. -f1)
+
+        # ----- Step 2: Agent time -----
+        agent_min=$(( adj_rounds_min * min_per_round_min ))
+        agent_max=$(( adj_rounds_max * min_per_round_max ))
+
+        # ----- Step 3: Integration time -----
+        integ_min=$(echo "$agent_min * $integration_overhead" | bc | cut -d. -f1)
+        integ_max=$(echo "$agent_max * $integration_overhead" | bc | cut -d. -f1)
+
+        # ----- Step 4: Human fix time (effectiveness-adjusted) -----
+        adj_fix_ratio=$(echo "$human_fix_ratio + (1 - $agent_eff) * 0.3" | bc)
+        fix_min=$(echo "$agent_min * $adj_fix_ratio" | bc | cut -d. -f1)
+        fix_max=$(echo "$agent_max * $adj_fix_ratio" | bc | cut -d. -f1)
+
+        # ----- Steps 5-8: Subtotal -----
+        subtotal_min=$(( agent_min + integ_min + fix_min + review_min + plan_min ))
+        subtotal_max=$(( agent_max + integ_max + fix_max + review_min + plan_max ))
+
+        # ----- Step 9: Task type multiplier -----
+        total_min=$(echo "$subtotal_min * $task_type_multiplier" | bc | cut -d. -f1)
+        total_max=$(echo "$subtotal_max * $task_type_multiplier" | bc | cut -d. -f1)
+
+        # ----- Step 11: PERT -----
+        midpoint=$(( (total_min + total_max) / 2 ))
+        pert_expected=$(( (total_min + 4 * midpoint + total_max) / 6 ))
+        pert_sd=$(( (total_max - total_min) / 6 ))
+
+        # ----- Step 12: Committed estimate (80%) -----
+        committed_min=$(echo "$total_min * $confidence_mult" | bc | cut -d. -f1)
+        committed_max=$(echo "$total_max * $confidence_mult" | bc | cut -d. -f1)
+
+        # ----- Format output -----
+        format_time() {
+          local mins=$1
+          if [ "$mins" -lt 120 ]; then
+            echo "${mins} min"
+          elif [ "$mins" -lt 960 ]; then
+            echo "$(echo "scale=1; $mins / 60" | bc) hrs"
+          else
+            echo "$(echo "scale=1; $mins / 480" | bc) days"
+          fi
+        }
+
+        pert_display=$(format_time $pert_expected)
+        committed_display=$(format_time $committed_max)
+        range_min_display=$(format_time $total_min)
+        range_max_display=$(format_time $total_max)
+
+        # Determine risk level
+        spread_ratio=$(echo "scale=2; $total_max / $total_min" | bc)
+        risk="medium"
+        if [ "$(echo "$spread_ratio > 3" | bc)" -eq 1 ]; then
+          risk="high"
+        elif [ "$(echo "$spread_ratio < 2" | bc)" -eq 1 ]; then
+          risk="low"
+        fi
+
+        # Build warnings
+        warnings=""
+        if [ "$complexity" = "XL" ]; then
+          warnings="${warnings}\n> :warning: Consider breaking this into smaller tasks for more accurate estimation."
+        fi
+        if [ "$total_max" -gt 4800 ]; then
+          warnings="${warnings}\n> :warning: Estimate exceeds 2 weeks — high uncertainty. Consider phased delivery."
+        fi
+        if [ "$(echo "$spread_ratio > 3" | bc)" -eq 1 ]; then
+          warnings="${warnings}\n> :warning: Wide estimate range — consider decomposing or running a spike first."
+        fi
+        if [ "$task_type" = "investigation" ]; then
+          warnings="${warnings}\n> :warning: Investigation tasks should be timeboxed. Output is a plan, not finished work."
+        fi
+
+        # Set outputs
+        echo "complexity=$complexity" >> "$GITHUB_OUTPUT"
+        echo "size_label=size/$complexity" >> "$GITHUB_OUTPUT"
+
+        # Build comment body
+        cat <<COMMENT_EOF > /tmp/estimate-comment.md
+        ## Auto-Estimate: ${complexity} — ${task_type}
+
+        **Expected:** ~${pert_display} | **Committed (80%):** ~${committed_display} | **Range:** ${range_min_display} – ${range_max_display} | **Risk:** ${risk}
+
+        ### PERT Breakdown
+
+        | Metric | Value |
+        |--------|-------|
+        | Complexity | ${complexity} |
+        | Task type | ${task_type} (${task_type_multiplier}x) |
+        | Agent rounds | ${adj_rounds_min} – ${adj_rounds_max} |
+        | Agent time | $(format_time $agent_min) – $(format_time $agent_max) |
+        | Human review | $(format_time $review_min) |
+        | Human planning | $(format_time $plan_min) – $(format_time $plan_max) |
+        | Human fix time | $(format_time $fix_min) – $(format_time $fix_max) |
+        | Integration | $(format_time $integ_min) – $(format_time $integ_max) |
+        | **PERT expected** | **${pert_display}** |
+        | PERT std dev | $(format_time $pert_sd) |
+        | Committed (80%) | ${committed_display} |
+        $(if [ -n "$warnings" ]; then echo -e "\n### Warnings\n${warnings}"; fi)
+
+        <details>
+        <summary>Assumptions & methodology</summary>
+
+        - **Mode:** Instant (automated from issue text)
+        - **Defaults:** 1 human, 1 agent, partial maturity, standard review, 80% confidence, ready phase, solo-startup org
+        - **Complexity inferred from:** description length (${char_count} chars) and keyword analysis
+        - **Formulas:** [progressive-estimation canonical formulas](../../references/formulas.md)
+
+        This is a rough automated estimate. For a detailed estimate, use the progressive-estimation skill interactively.
+        </details>
+
+        ---
+        *Generated by [progressive-estimation](https://github.com/enreign/progressive-estimation) auto-estimate action*
+        COMMENT_EOF
+
+    - name: Post estimate comment
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh api \
+          --method POST \
+          "/repos/${{ github.repository }}/issues/${{ inputs.issue-number }}/comments" \
+          -f body="$(cat /tmp/estimate-comment.md)"
+
+    - name: Add size label
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh api \
+          --method POST \
+          "/repos/${{ github.repository }}/issues/${{ inputs.issue-number }}/labels" \
+          --input - <<EOF
+        { "labels": ["${{ steps.estimate.outputs.size_label }}"] }
+        EOF
+
+    - name: Remove needs-estimate label
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      run: |
+        gh api \
+          --method DELETE \
+          "/repos/${{ github.repository }}/issues/${{ inputs.issue-number }}/labels/needs-estimate" \
+          || echo "Label already removed or not found"

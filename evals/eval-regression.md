@@ -74,11 +74,16 @@ including all 40+ API endpoints, database layer, auth, and deployment."
 - Complexity: XL
 - Agent effectiveness: 0.3
 - Agent rounds: 65-156
-- Expected (PERT): 2-6 weeks
-- Committed (80%): 3-8 weeks
+- Expected (PERT): 15-40 hrs (2-5 days)
+- Committed (80%): 20-55 hrs (3-7 days)
 - Risk: high
 - Warning: "Consider breaking this into smaller tasks"
 - Warning: "This estimate has high uncertainty"
+- Warning: "XL estimates are directional only"
+
+> **Note:** XL estimates are intentionally capped by the round-based model.
+> The anti-pattern guard strongly recommends decomposition — treat XL numbers
+> as rough sizing, not commitments.
 
 ### Case 5: Batch Consistency
 
@@ -92,7 +97,7 @@ Quick batch mode. 1 human, 1 agent, partial.
 
 **Expected:**
 - Task types auto-assigned: bug-fix, coding, coding
-- Bug fix has 1.2x multiplier applied
+- Bug fix has 1.3x multiplier applied
 - Individual estimates consistent with Cases 1-3 ranges for their sizes
 - PERT expected total is between batch min and max
 - Committed total is ~1.4x expected

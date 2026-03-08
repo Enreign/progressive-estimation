@@ -5,6 +5,9 @@ Thumbs.db
 # Editor
 .vscode/
 .idea/
+
+# Agent config (local only)
+AGENTS.md
 *.swp
 *.swo
 

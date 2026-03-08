@@ -41,7 +41,7 @@ coordination, testing, and non-coding effort.
 
 ```
 coding:          1.0   (baseline — mostly code, some review)
-bug-fix:         1.2   (debugging overhead, reproduction, regression testing)
+bug-fix:         1.3   (debugging overhead, reproduction, regression testing)
 investigation:   0.5   (timebox — output is a plan/report, not code)
 design:          1.2   (mockups, iteration with stakeholders, design system alignment)
 testing:         1.3   (test environment setup, fixture creation, flakiness debugging)
@@ -55,8 +55,9 @@ integration, and fixes.
 
 ### Agent Effectiveness by Task Size
 
-Based on METR research: agent success rate drops sharply as task complexity
-grows. This shifts effort from agent to human for larger tasks.
+Based on METR time horizon research (R²=0.83, ~230 tasks): agent autonomous
+success rate drops sharply as task complexity grows. This shifts effort from
+agent to human for larger tasks.
 
 ```
 S:  agent_effectiveness = 0.9   (agents handle ~90% of work well)
@@ -64,6 +65,19 @@ M:  agent_effectiveness = 0.7   (agents handle ~70%, more human intervention)
 L:  agent_effectiveness = 0.5   (agents handle ~50%, significant human steering)
 XL: agent_effectiveness = 0.3   (agents handle ~30%, mostly human-driven)
 ```
+
+**Important distinction:** These values measure *work acceleration* (how much
+the agent speeds up the overall task), not *autonomous completion rate* (whether
+the agent finishes the task without help). METR's autonomous success rates are
+lower (M≈0.4-0.6, L≈0.1-0.3, XL≈0.02-0.10 for frontier models as of early
+2026), but agents that fail to complete autonomously still produce useful partial
+output that accelerates the human. Our values sit between METR's autonomous
+success rate and 1.0, reflecting this partial-credit reality.
+
+**Model vintage caveat:** Agent capabilities double roughly every 7 months
+(METR). These values reflect early-2026 frontier models. Re-calibrate when
+adopting newer models — the calibration system (see calibration.md) will surface
+when these values drift from actuals.
 
 Effect: increases human_fix_ratio for larger tasks.
 
@@ -292,7 +306,7 @@ After computing estimates, check for these patterns and append warnings:
 
 | Pattern | Warning |
 |---------|---------|
-| Complexity = XL | "Consider breaking this into smaller tasks for more accurate estimation." |
+| Complexity = XL | "XL estimates are directional only — the round-based model cannot capture emergent complexity at this scale. Break into L or smaller tasks before committing to deadlines." |
 | Total > 2 weeks | "This estimate has high uncertainty (Cone of Uncertainty). Consider phased delivery with re-estimation at each phase." |
 | Spread ratio (max/min) > 3 | "Wide estimate range indicates high uncertainty. Consider decomposing or running a timeboxed investigation first." |
 | Definition phase = concept | "Concept-phase estimates can be off by 2-4x. Narrow the scope before committing to deadlines." |
@@ -306,10 +320,13 @@ Present estimates in the most readable unit:
 - Over 16 hours: show days (assuming 8-hour workday, e.g., "2-4 days")
 - Over 2 weeks: show weeks (e.g., "2-4 weeks")
 
-## Story Points (Optional)
+## Story Points (Mode-Aware)
 
-Some teams prefer story points over time estimates. Provide this mapping
-only when explicitly requested, with a warning.
+Story point guidance adapts to the detected cooperation mode.
+
+### Human-Only Mode
+
+Standard story points work well. Use for both sizing and velocity tracking.
 
 ```
 S  = 1-2 points
@@ -318,8 +335,48 @@ L  = 8-13 points
 XL = 20-40 points
 ```
 
-Warning: "Story points measure relative complexity, not time. This mapping
-is a starting reference — calibrate with your team's actual velocity."
+Velocity in points/sprint is stable and predictable. Plan sprints by filling to velocity.
+
+### Hybrid Mode (Dual-Track)
+
+Use points for **relative sizing and prioritization only**. Use hours for **sprint planning and velocity**.
+
+```
+S  = 1-2 points
+M  = 3-5 points
+L  = 8-13 points
+XL = 20-40 points
+```
+
+Track two velocities each sprint:
+- **Points velocity**: points completed (useful for trend)
+- **Hours velocity**: hours completed (useful for planning)
+
+When points velocity rises but hours velocity is flat, the team has hit its
+human review ceiling — agents are producing more, but humans can't review faster.
+
+Warning: "In hybrid teams, story points measure complexity but not delivery
+speed. A 5-point task may take 8 hours without an agent or 2 hours with one.
+Plan sprints in hours."
+
+### Agent-First Mode
+
+Do not use points for velocity — it produces meaningless noise. Optionally
+use points for rough relative sizing ("is this bigger than that?").
+
+Plan sprints by human review capacity:
+
+```
+available_capacity = review_hours_per_sprint × tasks_per_review_hour
+```
+
+The bottleneck is human review throughput, not task complexity. Track agent
+rounds separately to optimize agent configuration, but plan sprints by
+human hours.
+
+Warning: "In agent-first teams, velocity in story points is unreliable
+because agent throughput varies wildly by task type. Plan by human review
+capacity instead."
 
 ## Batch Rollup
 

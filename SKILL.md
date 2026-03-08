@@ -1,6 +1,6 @@
 ---
 name: progressive-estimation
-description: An AI skill for estimating AI-assisted and hybrid human+agent development work. Research-backed formulas with PERT statistics, confidence bands, calibration feedback loops, and zero dependencies. Triggers on estimation, effort sizing, story points, how long, agent time, and staffing planning.
+description: "Adapts to your team's working mode — human-only, hybrid, or agent-first — with research-backed formulas, confidence bands, and the right velocity model for each."
 license: MIT
 metadata:
   author: Enreign
@@ -25,11 +25,14 @@ Keywords: estimate, how long, effort, sizing, story points, rounds, agent time
 
 ## Interaction
 
-When asking questionnaire questions, use the `AskUserQuestion` tool if available
-in your environment. This creates a structured back-and-forth flow instead of
-dumping all questions at once. Ask one question at a time and wait for the
-response before proceeding. If the tool is not available, fall back to
-conversational questions in your text output.
+Use the `AskUserQuestion` tool if available in your environment for ALL user
+interactions: mode selection (Phase 0), intake questions (Phase 1), batch
+confirmation ("adjust any tasks?"), and tracker selection (Phase 4). This
+creates structured dropdowns instead of free-text back-and-forth. Ask one
+question at a time (or group related questions, up to 4 per call) and wait
+for the response before proceeding. If the tool is not available, fall back
+to conversational questions in your text output. Instant mode skips Phase 0
+and Phase 1 questions but still uses the tool for Phase 4 tracker selection.
 
 ## Workflow
 
@@ -37,14 +40,30 @@ conversational questions in your text output.
 
 Ask two questions upfront (one at a time):
 
-1. **Speed**: "Quick estimate with sensible defaults, or detailed walkthrough?"
-2. **Scope**: "Single task or batch of tasks?"
+1. **Control**: "How much control do you want?"
+   - **Instant** — zero questions, infer everything from the task description, output immediately
+   - **Quick** — 4 questions with sensible defaults
+   - **Detailed** — 13 questions, full control over every parameter
+2. **Scope**: "Single task or batch?"
 
-This produces four paths:
-- Quick + Single → fastest, ~4 questions then output
+This produces six paths:
+- Instant + Single → infer all parameters, output immediately
+- Instant + Batch → accept list, infer per task, output summary table
+- Quick + Single → ~4 questions then output
 - Quick + Batch → accept list, apply defaults to all, output summary table
 - Detailed + Single → full questionnaire (13 questions), rich output
 - Detailed + Batch → full questionnaire for shared parameters, per-task overrides
+
+### Instant Mode
+
+When the user selects Instant mode:
+- Infer complexity, task_type, and risk_level from the task description
+- Apply all defaults: 1 human, 1 agent, partial maturity, risk 1.3,
+  integration 15%, human fix 20%, standard review, domain familiarity 1.0,
+  confidence 80%, ready phase, solo-startup org
+- Skip directly to Phase 3 (Estimation) and Phase 4 (Output)
+- After output, suggest: "Want to refine? Say 'quick' for 4 questions or
+  'detailed' for full control."
 
 ### Phase 1: Intake
 
@@ -64,6 +83,26 @@ organization context, and per-task dependency mapping.
 
 Every question feeds a specific formula variable — see the mapping table in
 questionnaire.md for the complete wiring.
+
+### Phase 1.5: Cooperation Mode Detection (Automatic)
+
+Auto-detect the team's cooperation mode from intake answers:
+
+```
+if num_agents == 0 → Human-only mode
+if num_agents > 0 AND maturity in [exploratory, partial] → Hybrid mode
+if num_agents > 0 AND maturity == mostly-automated → Agent-first mode
+```
+
+Announce the detected mode before proceeding:
+
+| Mode | Announcement | Points Approach |
+|------|-------------|----------------|
+| Human-only | "Detected: human-only team. Using standard estimation with story points." | Points for sizing and velocity |
+| Hybrid | "Detected: hybrid team. Using dual-track estimation — points for sizing, hours for planning." | Dual-track: points + hours |
+| Agent-first | "Detected: agent-first team. Planning by human review capacity in hours." | Hours only; points optional for rough sizing |
+
+This mode affects output format (Phase 4) and calibration recommendations (Phase 5).
 
 ### Phase 2: Framework Selection
 
@@ -100,6 +139,32 @@ If the user requests a standalone deterministic calculator, generate one from
 - Output JSON with all canonical fields
 - Have zero external dependencies
 - Be a single self-contained file
+
+### Phase 3.5: Small Council Validation (Automatic)
+
+Three subagent perspectives review the estimate before output:
+
+- **Optimist**: Best-case analyst. What if everything goes right? Looks for
+  parallelizable work, reducible scope.
+- **Skeptic**: Risk analyst. What's missing? Hidden dependencies, integration
+  surprises, underestimated review.
+- **Historian**: Calibration analyst. How do similar past tasks compare?
+  Reference stories, velocity data.
+
+Trigger rules based on complexity:
+
+| Complexity | Council Members | Rationale |
+|------------|----------------|-----------|
+| S | None | Overhead exceeds value |
+| M | Skeptic only | 1 subagent |
+| L | Skeptic + Historian | 2 subagents |
+| XL | Full council (all 3) | All subagents |
+
+Each agent gives 2-3 sentences. Output a consensus estimate that weighs all
+perspectives. Flag disagreements where agents differ by >20%.
+
+> **Note:** Use the Agent tool to spawn council members as subagents if
+> available. If not available, simulate the perspectives inline.
 
 ### Phase 4: Output
 
@@ -150,9 +215,11 @@ Suggest re-estimation when:
 
 | Phase | Files Loaded | When |
 |-------|-------------|------|
-| 0-1 | questionnaire.md | Always (intake) |
+| 0-1 | questionnaire.md | Always (intake); skipped in Instant mode |
+| 1.5 | (no files) | Automatic after intake |
 | 2 | frameworks.md | After intake |
 | 3 | formulas.md | During computation |
+| 3.5 | calibration.md (reference stories) | Automatic for M+ tasks (council validation) |
 | 4 | output-schema.md | During output |
 | 5 | calibration.md | On request |
 
