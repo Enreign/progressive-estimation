@@ -97,7 +97,7 @@ Quick batch mode. 1 human, 1 agent, partial.
 
 **Expected:**
 - Task types auto-assigned: bug-fix, coding, coding
-- Bug fix has 1.2x multiplier applied
+- Bug fix has 1.3x multiplier applied
 - Individual estimates consistent with Cases 1-3 ranges for their sizes
 - PERT expected total is between batch min and max
 - Committed total is ~1.4x expected

@@ -41,7 +41,7 @@ coordination, testing, and non-coding effort.
 
 ```
 coding:          1.0   (baseline — mostly code, some review)
-bug-fix:         1.2   (debugging overhead, reproduction, regression testing)
+bug-fix:         1.3   (debugging overhead, reproduction, regression testing)
 investigation:   0.5   (timebox — output is a plan/report, not code)
 design:          1.2   (mockups, iteration with stakeholders, design system alignment)
 testing:         1.3   (test environment setup, fixture creation, flakiness debugging)
@@ -55,8 +55,9 @@ integration, and fixes.
 
 ### Agent Effectiveness by Task Size
 
-Based on METR research: agent success rate drops sharply as task complexity
-grows. This shifts effort from agent to human for larger tasks.
+Based on METR time horizon research (R²=0.83, ~230 tasks): agent autonomous
+success rate drops sharply as task complexity grows. This shifts effort from
+agent to human for larger tasks.
 
 ```
 S:  agent_effectiveness = 0.9   (agents handle ~90% of work well)
@@ -64,6 +65,19 @@ M:  agent_effectiveness = 0.7   (agents handle ~70%, more human intervention)
 L:  agent_effectiveness = 0.5   (agents handle ~50%, significant human steering)
 XL: agent_effectiveness = 0.3   (agents handle ~30%, mostly human-driven)
 ```
+
+**Important distinction:** These values measure *work acceleration* (how much
+the agent speeds up the overall task), not *autonomous completion rate* (whether
+the agent finishes the task without help). METR's autonomous success rates are
+lower (M≈0.4-0.6, L≈0.1-0.3, XL≈0.02-0.10 for frontier models as of early
+2026), but agents that fail to complete autonomously still produce useful partial
+output that accelerates the human. Our values sit between METR's autonomous
+success rate and 1.0, reflecting this partial-credit reality.
+
+**Model vintage caveat:** Agent capabilities double roughly every 7 months
+(METR). These values reflect early-2026 frontier models. Re-calibrate when
+adopting newer models — the calibration system (see calibration.md) will surface
+when these values drift from actuals.
 
 Effect: increases human_fix_ratio for larger tasks.
 
