@@ -184,23 +184,26 @@ bias_direction = sign(avg_deviation)  # positive = consistently under-estimating
 
 ## Sprint Velocity Tracking
 
-### Completed Points per Sprint
+Track velocity in **hours** (not story points) to stay consistent with PERT
+output and avoid the story-point-to-time conversion trap.
 
-Track story points completed each sprint to build a velocity baseline:
+### Completed Hours per Sprint
+
+Track estimated vs actual hours completed each sprint:
 
 ```
 sprint_log:
   - sprint: "2026-S1"
-    completed_points: 34
-    planned_points: 40
+    completed_hours: 34
+    planned_hours: 40
     team_size: 4
   - sprint: "2026-S2"
-    completed_points: 38
-    planned_points: 38
+    completed_hours: 38
+    planned_hours: 38
     team_size: 4
   - sprint: "2026-S3"
-    completed_points: 31
-    planned_points: 36
+    completed_hours: 28
+    planned_hours: 36
     team_size: 3  # someone was out
 ```
 
@@ -209,7 +212,7 @@ sprint_log:
 Compute rolling velocity over the last 3-5 sprints:
 
 ```
-rolling_velocity = mean(last_n_sprints.completed_points)  # n = 3 to 5
+rolling_velocity = mean(last_n_sprints.completed_hours)  # n = 3 to 5
 ```
 
 Use the last 3 sprints for fast-changing teams, last 5 for stable teams.
@@ -217,7 +220,7 @@ Use the last 3 sprints for fast-changing teams, last 5 for stable teams.
 ### Capacity Planning Formula
 
 ```
-available_points = rolling_velocity × (1 - buffer%)
+available_hours = rolling_velocity × (1 - buffer%)
 ```
 
 Default buffer: **20%** (accounts for unplanned work, bugs, meetings).
@@ -230,11 +233,11 @@ Default buffer: **20%** (accounts for unplanned work, bugs, meetings).
 
 ### Sprint Fit Check
 
-When batch estimating, compare total estimated points against available capacity:
+When batch estimating, compare total estimated hours against available capacity:
 
 ```
-total_estimated = sum(task_points)
-fit_ratio = total_estimated / available_points
+total_estimated = sum(task_committed_hours)
+fit_ratio = total_estimated / available_hours
 ```
 
 | Fit Ratio | Status | Action |
@@ -244,8 +247,8 @@ fit_ratio = total_estimated / available_points
 | 1.0 - 1.2 | Tight | Flag risk, identify deferrable tasks |
 | > 1.2 | Overflow | Must cut scope or split across sprints |
 
-Warn on overflow: "Estimated total ({total_estimated} pts) exceeds sprint
-capacity ({available_points} pts). Consider deferring {overflow} points of
+Warn on overflow: "Estimated total ({total_estimated} hrs) exceeds sprint
+capacity ({available_hours} hrs). Consider deferring {overflow} hrs of
 lower-priority work."
 
 ### Velocity Trend Detection
@@ -253,8 +256,8 @@ lower-priority work."
 Compare the last 3 sprints to the previous 3 to detect trends:
 
 ```
-recent_avg = mean(sprints[-3:].completed_points)
-previous_avg = mean(sprints[-6:-3].completed_points)
+recent_avg = mean(sprints[-3:].completed_hours)
+previous_avg = mean(sprints[-6:-3].completed_hours)
 trend_ratio = recent_avg / previous_avg
 ```
 
@@ -270,13 +273,13 @@ When batch estimating a sprint's worth of work, append a sprint fit summary:
 
 ```
 Sprint Fit Summary
-  Rolling velocity (3-sprint avg): 35 pts
+  Rolling velocity (3-sprint avg): 33 hrs
   Buffer: 20%
-  Available capacity: 28 pts
-  Total estimated: 31 pts
-  Fit ratio: 1.11 (Tight)
+  Available capacity: 26.4 hrs
+  Total estimated (committed 80%): 29 hrs
+  Fit ratio: 1.10 (Tight)
   Velocity trend: Stable
-  ⚠ Consider deferring 3 pts of lower-priority work
+  Warning: Consider deferring ~2.6 hrs of lower-priority work
 ```
 
 ## Team-Specific Profiles
