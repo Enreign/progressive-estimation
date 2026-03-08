@@ -25,12 +25,14 @@ Keywords: estimate, how long, effort, sizing, story points, rounds, agent time
 
 ## Interaction
 
-When asking questions in Quick or Detailed mode, use the `AskUserQuestion` tool
-if available in your environment. This creates structured dropdowns instead of
-free-text back-and-forth. Ask one question at a time (or group related questions,
-up to 4 per call) and wait for the response before proceeding. If the tool is
-not available, fall back to conversational questions in your text output. Instant
-mode skips questions entirely.
+Use the `AskUserQuestion` tool if available in your environment for ALL user
+interactions: mode selection (Phase 0), intake questions (Phase 1), batch
+confirmation ("adjust any tasks?"), and tracker selection (Phase 4). This
+creates structured dropdowns instead of free-text back-and-forth. Ask one
+question at a time (or group related questions, up to 4 per call) and wait
+for the response before proceeding. If the tool is not available, fall back
+to conversational questions in your text output. Instant mode skips Phase 0
+and Phase 1 questions but still uses the tool for Phase 4 tracker selection.
 
 ## Workflow
 
