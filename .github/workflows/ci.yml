@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  formula-tests:
+    name: Formula Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest tests/test_formulas.py -v
+
+  frontmatter-validation:
+    name: Frontmatter Validation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate SKILL.md frontmatter
+        run: |
+          python3 -c "
+          import re, sys
+
+          text = open('SKILL.md').read()
+          m = re.match(r'^---\n(.*?)\n---', text, re.DOTALL)
+          if not m:
+              print('ERROR: No YAML frontmatter found in SKILL.md')
+              sys.exit(1)
+
+          # Simple two-level YAML parser (no dependencies)
+          data = {}
+          current_section = None
+          for line in m.group(1).strip().split('\n'):
+              if line.startswith('  '):
+                  k, v = line.strip().split(':', 1)
+                  data.setdefault(current_section, {})[k.strip()] = v.strip().strip('\"')
+              elif ':' in line:
+                  k, v = line.split(':', 1)
+                  v = v.strip().strip('\"')
+                  if v:
+                      data[k.strip()] = v
+                  else:
+                      current_section = k.strip()
+
+          required = {
+              'name': data.get('name'),
+              'description': data.get('description'),
+              'license': data.get('license'),
+              'metadata.author': (data.get('metadata') or {}).get('author'),
+              'metadata.version': (data.get('metadata') or {}).get('version'),
+          }
+
+          missing = [k for k, v in required.items() if not v]
+          if missing:
+              print(f'ERROR: Missing required frontmatter fields: {missing}')
+              sys.exit(1)
+
+          for k, v in required.items():
+              print(f'  {k}: {v}')
+          print('Frontmatter OK')
+          "
+
+  reference-integrity:
+    name: Reference Integrity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check referenced files exist
+        run: |
+          python3 -c "
+          import re, os, sys
+
+          text = open('SKILL.md').read()
+          paths = re.findall(r'\x60((?:references|evals)/[a-zA-Z0-9._/-]+\.[a-z]+)\x60', text)
+          paths = sorted(set(paths))
+
+          if not paths:
+              print('WARNING: No file references found in SKILL.md')
+              sys.exit(0)
+
+          missing = [p for p in paths if not os.path.isfile(p)]
+
+          print(f'Checked {len(paths)} referenced files:')
+          for p in paths:
+              status = 'OK' if p not in missing else 'MISSING'
+              print(f'  [{status}] {p}')
+
+          if missing:
+              print(f'ERROR: {len(missing)} missing file(s)')
+              sys.exit(1)
+
+          print('All referenced files exist.')
+          "

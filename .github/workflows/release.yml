@@ -1,0 +1,32 @@
+name: Package Release
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  package:
+    name: Build and Attach .skill
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build .skill tarball
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          TARBALL="progressive-estimation-${VERSION}.skill"
+          tar czf "$TARBALL" \
+            SKILL.md \
+            references/ \
+            evals/
+          echo "TARBALL=$TARBALL" >> "$GITHUB_ENV"
+          echo "Built $TARBALL"
+          tar tzf "$TARBALL"
+
+      - name: Upload release asset
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" "$TARBALL" --clobber
