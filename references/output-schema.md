@@ -40,7 +40,7 @@ Output format adapts to the detected cooperation mode:
 
 Single task:
 ```
-Expected: ~4 hrs | Committed (80%): ~5.5 hrs | 10-26 agent rounds + 3 hrs human | Risk: medium | Size: M
+Expected: ~4 hrs | Committed (80%): ~5.5 hrs | 10-26 agent rounds (~180k tokens) + 3 hrs human | Risk: medium | Size: M
 ```
 
 Batch:
@@ -90,6 +90,7 @@ Ask the user: "Native fields or embedded in description? (default: embedded)"
 | committed_hours | Custom field | "Committed Estimate (hrs)" |
 | confidence_level | Custom field | "Confidence %" |
 | priority | Priority | 1-4 mapping |
+| token_estimate | Custom field | "Est. Tokens" |
 
 **Embedded:**
 ```markdown
@@ -107,9 +108,16 @@ Ask the user: "Native fields or embedded in description? (default: embedded)"
 | **Expected (PERT)** | **~4 hrs** |
 | **Committed (80%)** | **~5.5 hrs** |
 | Confidence Band (68%) | 3.4-5.0 hrs |
+| Token Estimate | ~180k tokens |
+| Model Tier | standard |
+| Est. Cost | ~$1.20 |
 | Risk | medium |
 | Team | 1 human, 1 agent |
 ```
+
+Token Estimate and Model Tier always appear in the breakdown table.
+Est. Cost only appears if `show_cost == true`.
+Cost does NOT appear in the one-line summary (too noisy).
 
 ### Canonical → JIRA
 
@@ -126,6 +134,7 @@ Ask the user: "Native fields or embedded in description? (default: embedded)"
 | human_review_minutes | Custom field | number type |
 | pert_expected_hours | Custom field | "Expected Estimate (hrs)" |
 | labels | Labels | array |
+| token_estimate | Custom field | "Est. Tokens" (number) |
 
 **Embedded:** Same markdown table in Description field.
 
@@ -143,6 +152,7 @@ Ask the user: "Native fields or embedded in description? (default: embedded)"
 | agent_rounds | Custom field | number |
 | human_review_minutes | Custom field | number |
 | priority | Priority | 1-4 |
+| token_estimate | Custom field | "Est. Tokens" (number) |
 
 **Embedded:** Same markdown table in Description field.
 
@@ -160,6 +170,7 @@ Ask the user: "Native fields or embedded in description? (default: embedded)"
 | agent_rounds | Body section | no custom fields |
 | human_review_minutes | Body section | no custom fields |
 | labels | Labels | — |
+| token_estimate | Body section | no custom fields |
 
 **Embedded:** Markdown table in issue Body. This is the recommended mode
 for GitHub Issues since it has no custom field support.
@@ -180,6 +191,7 @@ for GitHub Issues since it has no custom field support.
 | human_review_minutes | Numbers column | "Review (min)" |
 | priority | Priority column | — |
 | labels | Tags column | — |
+| token_estimate | Numbers column | "Est. Tokens" |
 
 **Embedded:** Markdown in Updates or Long Text column.
 
@@ -198,22 +210,101 @@ for GitHub Issues since it has no custom field support.
 | agent_rounds | Description section | no custom fields in free tier |
 | human_review_minutes | Description section | — |
 | labels | Labels | scoped labels supported |
+| token_estimate | Description section | no custom fields in free tier |
 
 **Embedded:** Markdown table in Description. Use `/estimate` quick action
 for time tracking integration.
+
+### Canonical → Asana
+
+**Native:**
+| Canonical Field | Asana Field | Notes |
+|----------------|------------|-------|
+| title | Task Name | — |
+| complexity | Custom field (Dropdown) | "Size" — S/M/L/XL |
+| committed_hours | Custom field (Number) | "Committed Estimate (hrs)" |
+| pert_expected_hours | Custom field (Number) | "Expected (hrs)" |
+| risk_level | Custom field (Dropdown) | "Risk" — low/medium/high |
+| risk_notes | Description | appended |
+| subtasks | Subtasks | native |
+| agent_rounds | Custom field (Number) | "Agent Rounds" |
+| human_review_minutes | Custom field (Number) | "Review (min)" |
+| token_estimate | Custom field (Number) | "Est. Tokens" |
+
+**Embedded:** Markdown in Description. Quirks: custom fields are
+project-scoped; time tracking is paid.
+
+### Canonical → Azure DevOps
+
+**Native:**
+| Canonical Field | ADO Field | Notes |
+|----------------|----------|-------|
+| title | Title | — |
+| complexity | Tags | `Size:M` |
+| committed_hours | Original Estimate | hours (native) |
+| pert_expected_hours | Custom field (Decimal) | "Expected Estimate (hrs)" |
+| risk_level | Tags | `Risk:medium` |
+| risk_notes | Description | HTML — use `<table>` |
+| subtasks | Child work items | parent-child link |
+| agent_rounds | Custom field (Integer) | "Agent Rounds" |
+| story_points | Story Points | native on User Story |
+| token_estimate | Custom field (Integer) | "Est. Tokens" |
+
+**Embedded:** HTML table in Description (ADO uses HTML, not markdown).
+Quirks: custom fields via Process customization; work item types matter
+(User Story vs Task).
+
+### Canonical → Zenhub
+
+**Native:**
+| Canonical Field | Zenhub Field | Notes |
+|----------------|-------------|-------|
+| title | Issue Title | GitHub Issue title |
+| complexity | Label | `size/M` (GitHub label) |
+| committed_hours | Estimate | Zenhub story points field |
+| pert_expected_hours | Body section | no custom fields |
+| risk_level | Label | `risk/medium` (GitHub label) |
+| risk_notes | Body | — |
+| subtasks | Task list | `- [ ]` in body, or child issues |
+| agent_rounds | Body section | no custom fields |
+| story_points | Estimate | native Zenhub field (points) |
+| token_estimate | Body section | no custom fields |
+
+**Embedded:** Markdown in GitHub Issue body (recommended). Quirks: Zenhub
+layers on top of GitHub Issues — uses GitHub labels + body for most data;
+Estimate field is points-only; Epics are cross-repo issue collections.
+
+### Canonical → Shortcut
+
+**Native:**
+| Canonical Field | Shortcut Field | Notes |
+|----------------|---------------|-------|
+| title | Story Name | — |
+| complexity | Label | `size:M` |
+| committed_hours | Custom field (Number) | "Committed (hrs)" |
+| pert_expected_hours | Custom field (Number) | "Expected (hrs)" |
+| risk_level | Label | `risk:medium` |
+| risk_notes | Description | markdown supported |
+| subtasks | Tasks (within Story) | checklist-style |
+| agent_rounds | Custom field (Number) | "Agent Rounds" |
+| story_points | Estimate | native field (points) |
+| token_estimate | Custom field (Number) | "Est. Tokens" |
+
+**Embedded:** Markdown in Description. Quirks: custom fields on Team plan+;
+native Estimate is points not hours; Stories have Tasks (checklist items).
 
 ## Batch Output Format
 
 ### Summary Table (Always First)
 
 ```
-| # | Task | Size | Type | Rounds | Agent | Human | Expected | Committed (80%) | Risk | Deps |
-|---|------|------|------|--------|-------|-------|----------|-----------------|------|------|
-| 1 | Auth service | M | coding | 10-26 | 20-78m | 2-3h | ~4h | ~5.5h | med | — |
-| 2 | Payment | L | coding | 26-65 | 52-195m | 4-8h | ~8h | ~11h | high | #1 |
-| 3 | DB migration | L | data-mig | 26-65 | 52-195m | 4-8h | ~16h | ~22h | high | — |
-|---|------|------|------|--------|-------|-------|----------|-----------------|------|------|
-| | **Totals** | | | | | | **~28h** | **~38.5h** | | |
+| # | Task | Size | Type | Rounds | Agent | Human | Tokens | Expected | Committed (80%) | Risk | Deps |
+|---|------|------|------|--------|-------|-------|--------|----------|-----------------|------|------|
+| 1 | Auth service | M | coding | 10-26 | 20-78m | 2-3h | ~180k | ~4h | ~5.5h | med | — |
+| 2 | Payment | L | coding | 26-65 | 52-195m | 4-8h | ~520k | ~8h | ~11h | high | #1 |
+| 3 | DB migration | L | data-mig | 26-65 | 52-195m | 4-8h | ~520k | ~16h | ~22h | high | — |
+|---|------|------|------|--------|-------|-------|--------|----------|-----------------|------|------|
+| | **Totals** | | | | | | **~1.2M** | **~28h** | **~38.5h** | | |
 ```
 
 ### Rollup Block
