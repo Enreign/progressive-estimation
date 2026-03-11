@@ -17,3 +17,13 @@ scripts/
 # Calibration data (team-specific, not shared)
 calibration-data.json
 estimates/
+
+# Research datasets (large files, download locally)
+# See datasets/README.md for download instructions
+datasets/*.csv
+datasets/*.arff
+datasets/*.json
+datasets/*.xlsx
+datasets/*.parquet
+datasets/*.zip
+datasets/*.tar.gz
