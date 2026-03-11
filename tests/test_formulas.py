@@ -89,8 +89,10 @@ def estimate(
     confidence_level=80,
     definition_phase="ready",
     org_size="solo-startup",
+    model_tier="standard",
+    show_cost=False,
 ):
-    """Run the full 14-step estimation pipeline. Returns dict with all fields."""
+    """Run the full 15-step estimation pipeline. Returns dict with all fields."""
 
     # Step 1: Agent Rounds
     base_min, base_max = BASE_ROUNDS[complexity]
@@ -167,6 +169,17 @@ def estimate(
         human_time_min = human_time_min / num_humans * (1 + communication_overhead)
         human_time_max = human_time_max / num_humans * (1 + communication_overhead)
 
+    # Step 15: Token & Cost Estimation
+    token_est = estimate_tokens(
+        complexity=complexity,
+        maturity=maturity,
+        num_agents=num_agents,
+        model_tier=model_tier,
+        show_cost=show_cost,
+        risk_coefficient=risk_coefficient,
+        domain_familiarity=domain_familiarity,
+    )
+
     return {
         "complexity": complexity,
         "task_type": task_type,
@@ -190,6 +203,7 @@ def estimate(
         "committed_hours": {"min": committed_min / 60, "max": committed_max / 60},
         "spread_multiplier": spread,
         "definition_phase": definition_phase,
+        "token_estimate": token_est,
     }
 
 
@@ -547,6 +561,71 @@ class TestCase8TokenScaling(unittest.TestCase):
             complexity="M", maturity="partial", model_tier="premium", show_cost=True
         )
         self.assertLess(te["cost_usd"]["max"], tp["cost_usd"]["max"])
+
+    def test_maturity_variation(self):
+        """Exploratory should produce more tokens than mostly-automated."""
+        t_exp = estimate_tokens(complexity="M", maturity="exploratory")
+        t_auto = estimate_tokens(complexity="M", maturity="mostly-automated")
+        self.assertGreater(
+            t_exp["total_tokens"]["min"], t_auto["total_tokens"]["min"]
+        )
+        self.assertGreater(
+            t_exp["total_tokens"]["max"], t_auto["total_tokens"]["max"]
+        )
+
+    def test_pert_expected_cost_math(self):
+        """PERT expected cost = (cost_min + 4*midpoint + cost_max) / 6."""
+        t = estimate_tokens(
+            complexity="M", maturity="partial", model_tier="standard", show_cost=True
+        )
+        cost_min = t["cost_usd"]["min"]
+        cost_max = t["cost_usd"]["max"]
+        expected_pert_cost = (cost_min + 4 * (cost_min + cost_max) / 2 + cost_max) / 6
+        self.assertAlmostEqual(
+            t["pert_expected_cost_usd"], expected_pert_cost, places=6
+        )
+
+
+class TestCase9TokenIntegration(unittest.TestCase):
+    """Case 9: Token estimate is integrated into the main estimate() pipeline."""
+
+    def setUp(self):
+        self.r = estimate(
+            complexity="M", task_type="coding", maturity="partial",
+            model_tier="standard", show_cost=True,
+        )
+
+    def test_token_estimate_present(self):
+        self.assertIn("token_estimate", self.r)
+
+    def test_token_estimate_structure(self):
+        te = self.r["token_estimate"]
+        self.assertIn("total_tokens", te)
+        self.assertIn("input_tokens", te)
+        self.assertIn("output_tokens", te)
+        self.assertIn("pert_expected_tokens", te)
+        self.assertIn("model_tier", te)
+        self.assertIn("cost_usd", te)
+        self.assertIn("pert_expected_cost_usd", te)
+
+    def test_token_estimate_uses_same_rounds(self):
+        """Token estimate should use the same adjusted rounds as the main estimate."""
+        te = self.r["token_estimate"]
+        rounds_min = self.r["agent_rounds"]["min"]
+        rounds_max = self.r["agent_rounds"]["max"]
+        tpr = TOKENS_PER_ROUND["partial"]["M"]
+        self.assertEqual(te["total_tokens"]["min"], rounds_min * tpr)
+        self.assertEqual(te["total_tokens"]["max"], rounds_max * tpr)
+
+    def test_model_tier_passthrough(self):
+        self.assertEqual(self.r["token_estimate"]["model_tier"], "standard")
+
+    def test_cost_present_when_show_cost(self):
+        self.assertIsNotNone(self.r["token_estimate"]["cost_usd"])
+
+    def test_cost_absent_when_not_show_cost(self):
+        r = estimate(complexity="M", show_cost=False)
+        self.assertIsNone(r["token_estimate"]["cost_usd"])
 
 
 if __name__ == "__main__":
