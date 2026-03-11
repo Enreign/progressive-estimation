@@ -111,7 +111,8 @@ Agent Rounds x Minutes per Round
     -> Cone of Uncertainty spread
     -> PERT Expected + Standard Deviation
     -> Confidence Multiplier
-    = Expected Estimate + Committed Estimate
+    -> Token & Cost Estimation
+    = Expected Estimate + Committed Estimate + Token Estimate
 ```
 
 ### Key Concepts
@@ -176,6 +177,21 @@ Based on [Construx research](https://www.construx.com/books/the-cone-of-uncertai
 </details>
 
 <details>
+<summary><strong>Token & Cost Estimation</strong></summary>
+
+Every estimate includes token consumption based on complexity × maturity lookup tables, split into input/output tokens. Optionally estimates API cost across three model tiers:
+
+| Tier | Models | Input/1M | Output/1M |
+|------|--------|----------|-----------|
+| Economy | Haiku, GPT-4o Mini, Gemini Flash | $0.50 | $2.50 |
+| Standard | Sonnet, GPT-4o, Gemini 2.5 Pro | $2.50 | $12.00 |
+| Premium | Opus, GPT-5 | $5.00 | $25.00 |
+
+Tokens appear in the one-line summary: `10-26 agent rounds (~180k tokens)`. Cost only appears when explicitly requested (`show_cost=true`).
+
+</details>
+
+<details>
 <summary><strong>Task Type Multipliers</strong></summary>
 
 Different work has different lifecycle overhead:
@@ -199,7 +215,7 @@ Different work has different lifecycle overhead:
 ### Single Task (Quick Mode)
 
 ```
-Expected: ~4 hrs | Committed (80%): ~5.5 hrs | 10-26 agent rounds + 3 hrs human | Risk: medium | Size: M
+Expected: ~4 hrs | Committed (80%): ~5.5 hrs | 10-26 agent rounds (~180k tokens) + 3 hrs human | Risk: medium | Size: M
 
 PERT Expected: 4.2 hrs (most likely outcome)
 Standard Deviation: +/-0.8 hrs
@@ -218,6 +234,8 @@ Standard Deviation: +/-0.8 hrs
 | Human Fix/QA | 8-30 min |
 | **Expected (PERT)** | **~4 hrs** |
 | **Committed (80%)** | **~5.5 hrs** |
+| Token Estimate | ~180k tokens |
+| Model Tier | standard |
 | Risk | medium |
 | Team | 1 human, 1 agent |
 
