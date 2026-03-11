@@ -119,6 +119,14 @@ All quick-path questions, plus:
     - Enterprise (50+ people) — formal review, compliance, multi-team coordination (1.3x)
 13. **Dependencies**: "Is this blocked by or blocking other tasks?"
     → dependency graph for sequencing
+14. **Model & cost**: "Which model tier are you using, and do you want cost estimates?"
+    → `model_tier`, `show_cost`
+    - Economy (Haiku, GPT-4o Mini, Gemini Flash) — cheapest
+    - Standard (Sonnet, GPT-4o, Gemini 2.5 Pro) — default
+    - Premium (Opus, GPT-5) — most capable
+    - Or name a specific model from the pricing table
+    - Show cost: yes/no (default: no)
+    - If user names a specific model, map to its tier for the formula
 
 ## Detailed Path — Batch
 
@@ -159,6 +167,7 @@ User can mark overrides or approve the whole table at once.
 | Definition phase | spread_multiplier | ready (1.0x) | asked |
 | Organization context | org_overhead | solo-startup (1.0x) | asked |
 | Dependencies | sequencing | none | asked |
+| Model & cost | model_tier, show_cost | standard, false | asked |
 
 ## Input Formats Accepted (Batch)
 

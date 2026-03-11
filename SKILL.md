@@ -4,7 +4,7 @@ description: "Adapts to your team's working mode — human-only, hybrid, or agen
 license: MIT
 metadata:
   author: Enreign
-  version: "0.3.0"
+  version: "0.4.0"
 ---
 
 # Progressive Estimation
@@ -131,7 +131,8 @@ The computation pipeline:
 6. Apply cone of uncertainty spread to widen/narrow range
 7. Compute PERT expected value and standard deviation
 8. Apply confidence multiplier for committed estimate
-9. Check anti-pattern guards and generate warnings
+9. Compute token & cost estimates (Step 15)
+10. Check anti-pattern guards and generate warnings
 
 If the user requests a standalone deterministic calculator, generate one from
 `formulas.md` in their preferred language. The generated script must:
@@ -183,7 +184,7 @@ Then provide:
 - Tracker-formatted output (if requested)
 
 Ask which tracker and mode:
-- **Tracker**: Linear, JIRA, ClickUp, GitHub Issues, Monday, GitLab, or generic
+- **Tracker**: Linear, JIRA, ClickUp, GitHub Issues, Monday, GitLab, Asana, Azure DevOps, Zenhub, Shortcut, or generic
 - **Mode**: Native fields or embedded in description (default: embedded)
 
 For batch output, produce a summary table first, then rollup, then warnings,

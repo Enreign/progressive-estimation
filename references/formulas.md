@@ -21,6 +21,8 @@ standalone calculator scripts in any language.
 | confidence_level | 50/80/90 | 80 | — |
 | definition_phase | concept/requirements/design/ready | ready | — |
 | org_size | solo-startup/growth/enterprise | solo-startup | — |
+| model_tier | economy/standard/premium or specific model | standard | — |
+| show_cost | boolean | false | — |
 
 ## Lookup Tables
 
@@ -164,6 +166,52 @@ enterprise:    1.3    (formal review, compliance, multi-team coordination)
 
 Applied to human time only (planning, review, fix), not agent time.
 
+### Tokens Per Round (thousands, by complexity × maturity)
+
+```
+                    S       M       L       XL
+exploratory:        8k      15k     25k     40k
+partial:            6k      12k     20k     35k
+mostly-automated:   5k      10k     18k     30k
+```
+
+### Output Token Ratio (by complexity)
+
+```
+S: 0.25    M: 0.28    L: 0.30    XL: 0.35
+```
+
+### Model Pricing (per 1M tokens, USD — last verified March 2026)
+
+Representative models so users can pick the closest match:
+
+```
+Model                    Input       Output      Tier
+─────────────────────────────────────────────────────
+GPT-4o Mini              $0.15       $0.60       economy
+Gemini 2.5 Flash         $0.30       $2.50       economy
+Claude Haiku 4.5         $1.00       $5.00       economy
+Gemini 2.5 Pro           $1.25       $10.00      standard
+GPT-4o                   $2.50       $10.00      standard
+Claude Sonnet 4.6        $3.00       $15.00      standard
+Claude Opus 4.6          $5.00       $25.00      premium
+GPT-5                    $1.25       $10.00      premium (capability, not price)
+```
+
+For the tier-based formula, use these representative rates:
+
+```
+                Input       Output
+economy:        $0.50       $2.50       (Haiku, GPT-4o-mini, Gemini Flash)
+standard:       $2.50       $12.00      (Sonnet, GPT-4o, Gemini 2.5 Pro)
+premium:        $5.00       $25.00      (Opus, GPT-5)
+```
+
+Note: "Premium" reflects capability tier (best available models), not
+necessarily highest price. GPT-5 is premium-capability at standard pricing.
+Pricing changes frequently — check provider pages before committing to
+cost-based decisions.
+
 ## Formulas
 
 ### Step 1: Agent Rounds
@@ -300,6 +348,29 @@ communication_overhead = 0.15 × (num_humans - 1)
 adjusted_human_time = adjusted_human_time × (1 + communication_overhead)
 ```
 
+### Step 15: Token & Cost Estimation
+
+```
+tokens_per_round = tokens_per_round_table[complexity][maturity]
+output_ratio = output_token_ratio[complexity]
+
+total_tokens_min = adjusted_rounds_min × tokens_per_round × num_agents
+total_tokens_max = adjusted_rounds_max × tokens_per_round × num_agents
+
+input_tokens_min = total_tokens_min × (1 - output_ratio)
+input_tokens_max = total_tokens_max × (1 - output_ratio)
+output_tokens_min = total_tokens_min × output_ratio
+output_tokens_max = total_tokens_max × output_ratio
+
+token_midpoint = (total_tokens_min + total_tokens_max) / 2
+pert_expected_tokens = (total_tokens_min + 4 × token_midpoint + total_tokens_max) / 6
+
+# Cost (only if show_cost == true)
+cost_min = (input_tokens_min × input_price + output_tokens_min × output_price) / 1_000_000
+cost_max = (input_tokens_max × input_price + output_tokens_max × output_price) / 1_000_000
+pert_expected_cost = (cost_min + 4 × (cost_min + cost_max) / 2 + cost_max) / 6
+```
+
 ## Anti-Pattern Guards
 
 After computing estimates, check for these patterns and append warnings:
@@ -427,7 +498,16 @@ Every estimation must produce these canonical fields:
     "humans": int,
     "agents": int
   },
-  "story_points":       int | null
+  "story_points":       int | null,
+  "token_estimate": {
+    "total_tokens":           { "min": int, "max": int },
+    "input_tokens":           { "min": int, "max": int },
+    "output_tokens":          { "min": int, "max": int },
+    "pert_expected_tokens":   int,
+    "model_tier":             "economy" | "standard" | "premium",
+    "cost_usd":               { "min": float, "max": float } | null,
+    "pert_expected_cost_usd": float | null
+  }
 }
 ```
 
@@ -444,7 +524,10 @@ For batch, wrap in:
     "critical_path":        string[],
     "task_count":           int,
     "size_distribution":    { "S": int, "M": int, "L": int, "XL": int },
-    "warnings":             string[]
+    "warnings":             string[],
+    "total_tokens":         int,
+    "pert_expected_tokens": int,
+    "total_cost_usd":       float | null
   }
 }
 ```

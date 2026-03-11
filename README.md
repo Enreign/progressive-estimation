@@ -35,7 +35,8 @@ Research-backed formulas. PERT statistics. Calibration feedback loops. Zero depe
 - Supports **single tasks or batches** (paste 5 issues or 500)
 - Produces **PERT expected values** with confidence bands, not just ranges
 - Separates **"expected"** from **"committed"** estimates at your chosen confidence level
-- Outputs in formats ready for **Linear, JIRA, ClickUp, GitHub Issues, Monday, and GitLab**
+- Estimates **token consumption and API cost** per model tier (economy/standard/premium)
+- Outputs in formats ready for **Linear, JIRA, ClickUp, GitHub Issues, Monday, GitLab, Asana, Azure DevOps, Zenhub, and Shortcut**
 - Includes a **calibration system** to improve accuracy over time with actuals
 
 ## Quick Start
@@ -247,7 +248,7 @@ Estimates can be output in two modes for any supported tracker:
 | **Embedded** (default) | Markdown table in description/body | None |
 | **Native** | Maps to tracker-specific fields | Custom fields |
 
-**Supported:** Linear, JIRA, ClickUp, GitHub Issues, Monday, GitLab
+**Supported:** Linear, JIRA, ClickUp, GitHub Issues, Monday, GitLab, Asana, Azure DevOps, Zenhub, Shortcut
 
 Embedded mode works everywhere immediately. Native mode requires custom fields for agent-specific metrics.
 
@@ -343,7 +344,7 @@ Evaluation prompts per the [Claude Skills 2.0](https://claude.com/blog/improving
 | `eval-quick.md` | Quick path produces valid PERT output with minimal input |
 | `eval-hybrid.md` | Detailed path handles multi-team, confidence levels, org overhead |
 | `eval-batch.md` | Batch mode with mixed types, dependencies, and rollup |
-| `eval-regression.md` | 6 baseline cases to detect drift after formula changes |
+| `eval-regression.md` | 8 baseline cases to detect drift after formula changes |
 
 Run evals after any change to formulas, frameworks, or the skill workflow.
 
@@ -354,7 +355,7 @@ Run evals after any change to formulas, frameworks, or the skill workflow.
 Contributions welcome — see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines. Key areas:
 
 - **Calibration data** — Share anonymized estimated vs. actual results to improve default ratios
-- **Tracker mappings** — Additional tracker support (Asana, Notion, Shortcut, etc.)
+- **Tracker mappings** — Additional tracker support (Notion, Basecamp, etc.)
 - **Task types** — New multipliers for work categories not yet covered
 - **Formulas** — Improvements backed by data or research
 - **Evals** — Additional test cases, especially edge cases
