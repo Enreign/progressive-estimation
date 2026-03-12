@@ -27,6 +27,14 @@ datasets/*.xlsx
 datasets/*.parquet
 datasets/*.zip
 datasets/*.tar.gz
+datasets/Huijgens492/
+datasets/Project-22/
+datasets/derek-jones/
+datasets/deep-se/
+
+# Superpowers plugin artifacts (local only)
+superpowers-marketplace/
+docs/superpowers/
 
 # Benchmark datasets (downloaded by datasets/download_benchmarks.sh)
 datasets/benchmarks/metr/
