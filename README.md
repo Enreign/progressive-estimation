@@ -199,7 +199,7 @@ Different work has different lifecycle overhead:
 | Type | Multiplier | Why |
 |------|-----------|-----|
 | Coding | 1.0x | Baseline |
-| Bug fix | 1.2x | Debugging, reproduction, regression testing |
+| Bug fix | 1.3x | Debugging, reproduction, regression testing |
 | Investigation | 0.5x | Timeboxed — output is a plan, not code |
 | Design | 1.2x | Iteration with stakeholders |
 | Testing | 1.3x | Environment setup, fixtures, flakiness |
@@ -229,7 +229,7 @@ Standard Deviation: +/-0.8 hrs
 | Task Type | coding |
 | Agent Rounds | 10-26 |
 | Agent Time | 20-78 min |
-| Human Review | 60 min |
+| Human Review | 30 min |
 | Human Planning | 30-60 min |
 | Human Fix/QA | 8-30 min |
 | **Expected (PERT)** | **~4 hrs** |
