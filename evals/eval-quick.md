@@ -22,7 +22,7 @@ Use quick mode. 1 human, 1 agent, partial automation.
 6. Shows confidence bands (68% and 95%)
 7. Shows both "expected" and "committed (80%)" estimates
 8. Breakdown table includes all canonical fields from formulas.md
-9. Agent effectiveness adjustment applied (0.7 for M, 0.5 for L)
+9. Agent effectiveness adjustment applied (0.5 for M, 0.35 for L)
 10. Risk level is medium (API/email integration, moderate ambiguity)
 11. Applies default values (risk=1.3, integration=15%, org=solo-startup, etc.)
 12. Offers tracker output as a follow-up, does not assume a tracker
@@ -30,7 +30,7 @@ Use quick mode. 1 human, 1 agent, partial automation.
 ## Verification Checks
 
 - PERT expected value is between the min and max range
-- Committed (80%) value is approximately 1.4x the expected value
+- Committed (80%) value reflects size-dependent multiplier (M=1.4x, L=1.4x)
 - Standard deviation is (max - min) / 6
 - Agent effectiveness for the assigned complexity is reflected in human fix ratio
 

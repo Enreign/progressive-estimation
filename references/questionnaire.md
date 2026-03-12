@@ -100,8 +100,8 @@ All quick-path questions, plus:
 10. **Confidence level**: "What confidence level do you need for this commitment?"
     → `confidence_multiplier`
     - 50% (stretch goal) — equal chance of finishing earlier or later (1.0x)
-    - 80% (likely) — reasonable buffer for typical unknowns (1.4x)
-    - 90% (safe commitment) — high confidence, suitable for external deadlines (1.8x)
+    - 80% (likely) — reasonable buffer for typical unknowns (1.4–1.8x, size-dependent)
+    - 90% (safe commitment) — high confidence, suitable for external deadlines (2.0–2.9x, size-dependent)
     - Explain: "50% means 'our best guess', 90% means 'we're almost certain
       we'll deliver within this range'."
 11. **Definition phase**: "How well-defined is this work right now?"

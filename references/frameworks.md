@@ -22,8 +22,8 @@ taking humans <4 minutes, but <10% on tasks >4 hours. Agent capability
 | Complexity | Agent Effectiveness | Implication |
 |------------|-------------------|-------------|
 | S | 0.9 | Agent handles ~90%, minimal human correction |
-| M | 0.7 | Agent handles ~70%, moderate human intervention |
-| L | 0.5 | Agent handles ~50%, significant human steering needed |
+| M | 0.5 | Agent handles ~50%, significant human intervention |
+| L | 0.35 | Agent handles ~35%, mostly human-driven |
 | XL | 0.3 | Agent handles ~30%, human-driven with agent assist |
 
 This shifts the human_fix_ratio upward for larger tasks automatically.
