@@ -51,6 +51,17 @@ git clone https://github.com/Enreign/progressive-estimation.git ~/.claude/skills
 
 **Other clients:** See the full [Installation Guide](INSTALLATION.md) for setup instructions for **Cursor, GitHub Copilot, Windsurf, Cline, Aider, Continue.dev, ChatGPT, and Gemini Code Assist**.
 
+### Tell Your Agents
+
+Copy the example files into your project so agents know the skill is available
+and what it can do:
+
+- [`examples/CLAUDE.md`](examples/CLAUDE.md) — project-level instructions (features, conventions, customization)
+- [`examples/AGENTS.md`](examples/AGENTS.md) — subagent instructions (when to estimate, how to invoke, re-estimation triggers)
+
+Merge the relevant sections into your existing `CLAUDE.md` / `AGENTS.md`, or
+copy them as-is. Both files include customizable sections for your team's defaults.
+
 ### Use
 
 In your AI coding client, just ask for an estimate:

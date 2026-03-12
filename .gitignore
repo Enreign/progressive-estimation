@@ -7,7 +7,7 @@ Thumbs.db
 .idea/
 
 # Agent config (local only)
-AGENTS.md
+/AGENTS.md
 *.swp
 *.swo
 
