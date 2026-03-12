@@ -57,24 +57,24 @@ integration, and fixes.
 
 ### Agent Effectiveness by Task Size
 
-Based on METR time horizon research (R²=0.83, ~230 tasks): agent autonomous
-success rate drops sharply as task complexity grows. This shifts effort from
-agent to human for larger tasks.
+Based on METR time horizon research (24k runs, 228 tasks, Jan 2025–Feb 2026):
+agent autonomous success rate drops sharply as task complexity grows. This
+shifts effort from agent to human for larger tasks.
 
 ```
 S:  agent_effectiveness = 0.9   (agents handle ~90% of work well)
-M:  agent_effectiveness = 0.7   (agents handle ~70%, more human intervention)
-L:  agent_effectiveness = 0.5   (agents handle ~50%, significant human steering)
-XL: agent_effectiveness = 0.3   (agents handle ~30%, mostly human-driven)
+M:  agent_effectiveness = 0.5   (agents handle ~50%, significant human intervention)
+L:  agent_effectiveness = 0.35  (agents handle ~35%, mostly human-driven)
+XL: agent_effectiveness = 0.3   (agents handle ~30%, almost entirely human-driven)
 ```
 
 **Important distinction:** These values measure *work acceleration* (how much
 the agent speeds up the overall task), not *autonomous completion rate* (whether
 the agent finishes the task without help). METR's autonomous success rates are
-lower (M≈0.4-0.6, L≈0.1-0.3, XL≈0.02-0.10 for frontier models as of early
-2026), but agents that fail to complete autonomously still produce useful partial
-output that accelerates the human. Our values sit between METR's autonomous
-success rate and 1.0, reflecting this partial-credit reality.
+lower (S≈0.83, M≈0.25, L≈0.15, XL≈0.22 for frontier models, n=24k runs), but
+agents that fail to complete autonomously still produce useful partial output
+that accelerates the human. Our values sit between METR's autonomous success
+rate and 1.0, reflecting this partial-credit reality.
 
 **Model vintage caveat:** Agent capabilities double roughly every 7 months
 (METR). These values reflect early-2026 frontier models. Re-calibrate when
@@ -102,9 +102,9 @@ verifying the agent's output.
 
 ```
             S      M      L      XL
-light:      15     30     60     120
-standard:   30     60     120    240
-deep:       60     120    240    480
+light:      10     15     30     60
+standard:   20     30     60     120
+deep:       40     60     120    240
 ```
 
 ### Human Planning & Coordination Minutes by Complexity
@@ -121,13 +121,15 @@ XL:  120-480 min
 
 ### Confidence Level Multiplier
 
-Based on James Shore's risk management research. Applied to the final
-estimate to convert from "expected" to "committable."
+Size-dependent multipliers derived from 84k estimate-actual pairs (CESAW,
+SiP, Renzo, Project-22) with bootstrap 95% CIs. Small tasks have wider
+actual/estimate spreads, requiring larger multipliers for high confidence.
 
 ```
-50%:  1.0   (stretch goal — equal chance of over/under)
-80%:  1.4   (likely — reasonable buffer for unknowns)
-90%:  1.8   (safe commitment — high confidence delivery)
+        S      M      L      XL
+50%:   1.0    1.0    1.0    0.75
+80%:   1.8    1.4    1.4    1.5
+90%:   2.9    2.1    2.0    2.2
 ```
 
 Quick path defaults to 80%. Detailed path asks the user.
@@ -178,7 +180,7 @@ mostly-automated:   5k      10k     18k     30k
 ### Output Token Ratio (by complexity)
 
 ```
-S: 0.25    M: 0.28    L: 0.30    XL: 0.35
+S: 0.30    M: 0.30    L: 0.30    XL: 0.35
 ```
 
 ### Model Pricing (per 1M tokens, USD — last verified March 2026)
@@ -293,14 +295,19 @@ total_min = max(0, midpoint - half_spread)
 total_max = midpoint + half_spread
 ```
 
-### Step 11: PERT Three-Point Estimate
+### Step 11: Log-Normal Three-Point Estimate
 
-Compute a weighted expected value and standard deviation for stakeholder
-communication. Uses the PERT beta distribution formula.
+Compute a weighted expected value using log-normal weighting. Deep validation
+(KS test, n=84k across 4 bands) showed log-normal fits actual software effort
+distributions better than PERT-beta in every size band. Log-normal captures
+the heavy right tail (overruns) that beta underestimates.
+
+The most-likely value is shifted toward the minimum (geometric mean of
+min and max) to reflect the right-skewed nature of effort distributions.
 
 ```
-total_midpoint = (total_min + total_max) / 2
-pert_expected = (total_min + 4 × total_midpoint + total_max) / 6
+most_likely = sqrt(total_min × total_max)          # geometric mean
+pert_expected = (total_min + 4 × most_likely + total_max) / 6
 pert_sd = (total_max - total_min) / 6
 
 confidence_68_min = pert_expected - pert_sd
@@ -309,18 +316,14 @@ confidence_95_min = pert_expected - 2 × pert_sd
 confidence_95_max = pert_expected + 2 × pert_sd
 ```
 
-Note: PERT uses asymmetric distributions in practice (software tasks skew
-toward overruns). The midpoint here is a simplification — for more accuracy,
-use the geometric mean or weight the most-likely value closer to the minimum.
-
 ### Step 12: Apply Confidence Level Multiplier
 
 Convert from expected estimate to committed estimate at the user's chosen
-confidence level.
+confidence level. Multiplier is size-dependent (see lookup table).
 
 ```
-committed_min = total_min × confidence_multiplier[confidence_level]
-committed_max = total_max × confidence_multiplier[confidence_level]
+committed_min = total_min × confidence_multiplier[confidence_level][complexity]
+committed_max = total_max × confidence_multiplier[confidence_level][complexity]
 ```
 
 Present both the "expected" and "committed" values:

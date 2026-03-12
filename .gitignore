@@ -27,3 +27,11 @@ datasets/*.xlsx
 datasets/*.parquet
 datasets/*.zip
 datasets/*.tar.gz
+
+# Benchmark datasets (downloaded by datasets/download_benchmarks.sh)
+datasets/benchmarks/metr/
+datasets/benchmarks/aider/
+datasets/benchmarks/openhands-sample.csv
+# Bundled files are tracked:
+# datasets/benchmarks/tokenomics.csv
+# datasets/benchmarks/onprem-tokens.csv

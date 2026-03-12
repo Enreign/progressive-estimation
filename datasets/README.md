@@ -45,6 +45,29 @@ Request at https://isbsg.org — free for university research.
 | Deep-SE (23k) | Story points | Validate point distributions across real projects |
 | SWE-bench costs | Token estimation | Back-calculate tokens/round from total cost data |
 
+### 5. AI Coding Benchmarks (for token/agent validation)
+
+```bash
+bash datasets/download_benchmarks.sh
+```
+
+Downloads:
+- **METR Time Horizons** — 228 tasks with human expert duration + agent pass/fail scores ([source](https://github.com/METR/eval-analysis-public))
+- **OpenHands SWE-bench** — 1000-row sample from 67k agent trajectories on real GitHub issues ([source](https://huggingface.co/datasets/nebius/SWE-rebench-openhands-trajectories))
+- **Aider Leaderboard** — ~50 models with cost, tokens, and pass rates ([source](https://github.com/Aider-AI/aider))
+
+Bundled (already in repo):
+- **Tokenomics** — per-stage token breakdown from 30 ChatDev tasks (arXiv 2601.14470)
+- **onprem.ai tokens** — token estimates for common coding tasks
+
+| Dataset | Parameter | Analysis |
+|---------|-----------|----------|
+| METR (228) | Agent effectiveness | Fit success rate vs task duration to our S/M/L/XL |
+| OpenHands (1k) | Tokens per round | Derive tokens from trajectory metadata |
+| Aider (~50 models) | Cost model | Compare reported cost to our tier pricing |
+| Tokenomics (30) | Output token ratio | Per-stage token splits vs our 0.25-0.35 |
+| onprem.ai (64) | Tokens per task type | Token counts by coding task category |
+
 ## Analysis Scripts
 
 Use the estimation calculator (`tests/test_formulas.py`) to generate predictions, then compare against dataset actuals:

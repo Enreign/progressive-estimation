@@ -1,0 +1,7 @@
+phase,input_tokens_pct,output_tokens_pct,reasoning_tokens_pct,total_tokens_pct
+Design,4.2,3.1,5.8,4.1
+Coding,12.5,15.2,10.3,12.8
+CodeCompletion,8.1,7.9,6.2,7.6
+CodeReview,59.4,55.1,62.3,59.4
+Testing,10.2,12.8,9.1,10.3
+Documentation,5.6,5.9,6.3,5.8
