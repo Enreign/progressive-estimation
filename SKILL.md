@@ -4,7 +4,7 @@ description: "Adapts to your team's working mode — human-only, hybrid, or agen
 license: MIT
 metadata:
   author: Enreign
-  version: "0.4.0"
+  version: "0.5.0"
 ---
 
 # Progressive Estimation
@@ -227,20 +227,22 @@ Suggest re-estimation when:
 ## Key Concepts
 
 ### Agent Effectiveness Decay
-Based on METR research: AI agents excel at small tasks (~90% effectiveness)
-but effectiveness drops to ~30% for XL tasks. The skill automatically
-increases human effort allocation for larger tasks.
+Based on METR research (24k runs, 228 tasks): AI agents excel at small tasks
+(~90% effectiveness) but effectiveness drops to ~30% for XL tasks. The skill
+automatically increases human effort allocation for larger tasks.
 
-### PERT Three-Point Estimation
-Every estimate produces a weighted expected value using
-`(min + 4×midpoint + max) / 6` with standard deviation `(max - min) / 6`.
-This gives stakeholders a single "most likely" number plus confidence bands.
+### Log-Normal Three-Point Estimation
+Every estimate produces a weighted expected value using a log-normal weighting:
+`(min + 4×geometric_mean + max) / 6` with standard deviation `(max - min) / 6`.
+Deep validation (KS test, n=84k) showed log-normal fits actual software effort
+distributions better than PERT-beta in all size bands.
 
 ### Confidence Levels
-Separate "expected" from "committed" estimates:
+Size-dependent multipliers derived from 84k estimate-actual pairs. Small tasks
+need larger buffers due to wider actual/estimate spreads:
 - 50% = stretch goal (raw expected value)
-- 80% = likely delivery (1.4x, default for quick path)
-- 90% = safe commitment for external deadlines (1.8x)
+- 80% = likely delivery (1.4–1.8x depending on size, default for quick path)
+- 90% = safe commitment for external deadlines (2.0–2.9x depending on size)
 
 ### Cone of Uncertainty
 Early-phase estimates have wider ranges. The skill widens min/max spread

@@ -36,10 +36,10 @@ Quick mode. "Add Stripe payment integration to checkout flow."
 **Expected ranges:**
 - Complexity: M
 - Task type: coding (1.0x)
-- Agent effectiveness: 0.7
+- Agent effectiveness: 0.5
 - Agent rounds: 10-26
 - Expected (PERT): 2-5 hrs
-- Committed (80%): 3-7 hrs
+- Committed (80%): 2-7 hrs
 - Risk: medium
 
 ### Case 3: Large Task (L, data-migration)
@@ -54,10 +54,10 @@ including schema, queries, and data migration."
 **Expected ranges:**
 - Complexity: L
 - Task type: data-migration (2.0x)
-- Agent effectiveness: 0.5
+- Agent effectiveness: 0.35
 - Agent rounds: 26-65
 - Expected (PERT): 1-3 days
-- Committed (80%): 1.5-4 days
+- Committed (80%): 1-4 days
 - Risk: high
 - Warning triggered: "Consider phased delivery"
 
@@ -100,7 +100,7 @@ Quick batch mode. 1 human, 1 agent, partial.
 - Bug fix has 1.3x multiplier applied
 - Individual estimates consistent with Cases 1-3 ranges for their sizes
 - PERT expected total is between batch min and max
-- Committed total is ~1.4x expected
+- Committed total reflects size-dependent multipliers (S: 1.8x, M: 1.4x, L: 1.4x)
 
 ### Case 6: Confidence Level Comparison
 
@@ -114,9 +114,9 @@ Run once with 50% confidence, once with 90% confidence.
 
 **Expected:**
 - Same PERT expected value for both
-- 50% committed = expected × 1.0
-- 90% committed = expected × 1.8
-- Ratio between the two committed values should be ~1.8
+- 50% committed = expected × 1.0 (for M)
+- 90% committed = expected × 2.1 (for M, size-dependent)
+- Ratio between the two committed values should be ~2.1
 
 ## Regression Criteria
 

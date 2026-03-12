@@ -120,13 +120,13 @@ Agent Rounds x Minutes per Round
 <details>
 <summary><strong>Agent Effectiveness Decay</strong></summary>
 
-Based on [METR research](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/): AI agents handle ~90% of small tasks well but only ~30% of XL tasks. The skill automatically increases human effort for larger tasks.
+Based on [METR research](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) (24k runs, 228 tasks, Jan 2025–Feb 2026): AI agents handle ~90% of small tasks well but only ~30% of XL tasks. Calibrated against METR autonomous completion rates with partial-credit adjustment.
 
 | Size | Agent Effectiveness | Human Fix Adjustment |
 |------|-------------------|---------------------|
 | S | 90% | Minimal correction |
-| M | 70% | Moderate intervention |
-| L | 50% | Significant steering |
+| M | 50% | Significant intervention |
+| L | 35% | Mostly human-driven |
 | XL | 30% | Human-driven with agent assist |
 
 </details>
@@ -134,29 +134,29 @@ Based on [METR research](https://metr.org/blog/2025-07-10-early-2025-ai-experien
 <details>
 <summary><strong>PERT Three-Point Estimation</strong></summary>
 
-Every estimate produces a weighted expected value using the PERT beta distribution:
+Every estimate produces a weighted expected value using log-normal weighting (validated against 84k tasks via KS test — log-normal fits better than PERT-beta in all size bands):
 
 ```
-Expected = (min + 4 x midpoint + max) / 6
+Expected = (min + 4 x geometric_mean(min, max) + max) / 6
 SD = (max - min) / 6
 ```
 
-This gives stakeholders a single "most likely" number plus confidence bands (68%, 95%).
+This gives stakeholders a single "most likely" number plus confidence bands (68%, 95%). The geometric mean shifts the expected value toward the minimum, reflecting the right-skewed nature of software effort distributions.
 
 </details>
 
 <details>
 <summary><strong>Confidence Levels</strong></summary>
 
-Separate "what we expect" from "what we commit to":
+Separate "what we expect" from "what we commit to". Size-dependent multipliers derived from 84k estimate-actual pairs (small tasks need larger buffers due to wider variance):
 
-| Level | Multiplier | Use Case |
-|-------|-----------|----------|
-| 50% | 1.0x | Stretch goal, internal planning |
-| 80% | 1.4x | Likely delivery (default) |
-| 90% | 1.8x | Safe commitment, external deadlines |
+| Level | S | M | L | XL | Use Case |
+|-------|---|---|---|----|----|
+| 50% | 1.0x | 1.0x | 1.0x | 0.75x | Stretch goal, internal planning |
+| 80% | 1.8x | 1.4x | 1.4x | 1.5x | Likely delivery (default) |
+| 90% | 2.9x | 2.1x | 2.0x | 2.2x | Safe commitment, external deadlines |
 
-Based on [James Shore's risk management framework](http://www.jamesshore.com/v2/blog/2008/use-risk-management-to-make-solid-commitments).
+Calibrated from [CESAW, SiP, Renzo, Project-22 datasets](https://github.com/Derek-Jones/Software-estimation-datasets) with bootstrap 95% CIs.
 
 </details>
 
@@ -327,6 +327,16 @@ progressive-estimation/
 │   ├── formulas.md             All arithmetic, single source of truth (phase 3)
 │   ├── output-schema.md        Output formats, tracker mappings (phase 4)
 │   └── calibration.md          Tuning with actuals (phase 5, on request)
+├── tests/
+│   ├── test_formulas.py        63 regression tests (deterministic, stdlib-only)
+│   ├── validate_all_datasets.py  86k+ data point validation across 13 datasets
+│   └── deep_validation.py      11-analysis deep validation with Parameter Audit Card
+├── datasets/
+│   ├── README.md               Download instructions for research datasets
+│   ├── download_benchmarks.sh  Downloads METR, OpenHands, Aider benchmark data
+│   └── benchmarks/             Bundled + downloaded benchmark datasets
+├── docs/
+│   └── deep-validation-findings.md  Combined findings from 110k data points
 └── evals/
     ├── eval-quick.md           Quick path smoke test
     ├── eval-hybrid.md          Detailed path, multi-team
@@ -344,12 +354,17 @@ The estimation model is informed by:
 
 | Source | Contribution |
 |--------|-------------|
-| [METR](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) | Agent effectiveness decay by task size; AI time horizon benchmarks |
-| [PERT](https://en.wikipedia.org/wiki/Three-point_estimation) | Three-point estimation with beta distribution |
-| [James Shore](http://www.jamesshore.com/v2/blog/2008/use-risk-management-to-make-solid-commitments) | Risk multipliers for confidence-based commitments |
+| [METR](https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/) | Agent effectiveness decay by task size; 24k runs across 228 tasks (arXiv:2503.14499) |
+| [Derek Jones datasets](https://github.com/Derek-Jones/Software-estimation-datasets) | 86k+ tasks (CESAW, SiP, Project-22, Renzo) — confidence multipliers, distribution fitting, review times |
+| [Aider leaderboard](https://github.com/Aider-AI/aider) | ~50 models with cost, tokens, pass rates — output token ratios, cost model validation |
+| [PERT / Log-Normal](https://en.wikipedia.org/wiki/Three-point_estimation) | Three-point estimation, validated with log-normal fit (KS test, n=84k) |
 | [Jorgensen & Grimstad](https://www.sciencedirect.com/science/article/abs/pii/S0164121202001565) | Calibration feedback improving accuracy 64% -> 81% |
 | [Construx](https://www.construx.com/books/the-cone-of-uncertainty/) | Cone of Uncertainty — estimate ranges narrowing as decisions are made |
 | [Standish CHAOS](https://www.umsl.edu/~sauterv/7892/Standish/standish-IST.pdf) | Project overrun patterns and their limitations |
+
+### Deep Validation
+
+All formula parameters have been validated against 110k+ data points across 13 datasets using bootstrap CIs and KS goodness-of-fit tests. See [docs/deep-validation-findings.md](docs/deep-validation-findings.md) for the full audit (53 parameters, 11 analyses).
 
 ---
 
