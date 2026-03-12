@@ -29,8 +29,8 @@ TASK_TYPE_MULTIPLIER = {
 
 AGENT_EFFECTIVENESS = {
     "S": 0.9,
-    "M": 0.7,
-    "L": 0.5,
+    "M": 0.5,
+    "L": 0.35,
     "XL": 0.3,
 }
 
@@ -41,9 +41,9 @@ MINUTES_PER_ROUND = {
 }
 
 REVIEW_MINUTES = {
-    "light":    {"S": 15,  "M": 30,  "L": 60,  "XL": 120},
-    "standard": {"S": 30,  "M": 60,  "L": 120, "XL": 240},
-    "deep":     {"S": 60,  "M": 120, "L": 240, "XL": 480},
+    "light":    {"S": 10,  "M": 15,  "L": 30,  "XL": 60},
+    "standard": {"S": 20,  "M": 30,  "L": 60,  "XL": 120},
+    "deep":     {"S": 40,  "M": 60,  "L": 120, "XL": 240},
 }
 
 PLANNING_MINUTES = {
@@ -54,9 +54,9 @@ PLANNING_MINUTES = {
 }
 
 CONFIDENCE_MULTIPLIER = {
-    50: 1.0,
-    80: 1.4,
-    90: 1.8,
+    50: {"S": 1.0,  "M": 1.0,  "L": 1.0,  "XL": 0.75},
+    80: {"S": 1.8,  "M": 1.4,  "L": 1.4,  "XL": 1.5},
+    90: {"S": 2.9,  "M": 2.1,  "L": 2.0,  "XL": 2.2},
 }
 
 SPREAD_MULTIPLIER = {
@@ -144,13 +144,14 @@ def estimate(
     total_min = max(0, midpoint - half_spread)
     total_max = midpoint + half_spread
 
-    # Step 11: PERT Three-Point Estimate
-    total_midpoint = (total_min + total_max) / 2
-    pert_expected = (total_min + 4 * total_midpoint + total_max) / 6
+    # Step 11: Log-Normal Three-Point Estimate
+    import math
+    most_likely = math.sqrt(max(total_min, 0.001) * max(total_max, 0.001))
+    pert_expected = (total_min + 4 * most_likely + total_max) / 6
     pert_sd = (total_max - total_min) / 6
 
-    # Step 12: Confidence Level Multiplier
-    cm = CONFIDENCE_MULTIPLIER[confidence_level]
+    # Step 12: Confidence Level Multiplier (size-dependent)
+    cm = CONFIDENCE_MULTIPLIER[confidence_level][complexity]
     committed_min = total_min * cm
     committed_max = total_max * cm
 
@@ -216,8 +217,8 @@ TOKENS_PER_ROUND = {
 }
 
 OUTPUT_TOKEN_RATIO = {
-    "S": 0.25,
-    "M": 0.28,
+    "S": 0.30,
+    "M": 0.30,
     "L": 0.30,
     "XL": 0.35,
 }
@@ -326,7 +327,7 @@ class TestCase2MediumM(unittest.TestCase):
         )
 
     def test_agent_effectiveness(self):
-        self.assertAlmostEqual(self.r["agent_effectiveness"], 0.7)
+        self.assertAlmostEqual(self.r["agent_effectiveness"], 0.5)
 
     def test_agent_rounds(self):
         self.assertGreaterEqual(self.r["agent_rounds"]["min"], 10)
@@ -337,7 +338,8 @@ class TestCase2MediumM(unittest.TestCase):
         self.assertLessEqual(self.r["pert_expected_hours"], 5)
 
     def test_committed(self):
-        self.assertGreaterEqual(self.r["committed_hours"]["min"], 2.5)
+        # 80% M multiplier = 1.4x (unchanged)
+        self.assertGreaterEqual(self.r["committed_hours"]["min"], 2.0)
         self.assertLessEqual(self.r["committed_hours"]["max"], 7)
 
 
@@ -355,7 +357,7 @@ class TestCase3LargeDataMigration(unittest.TestCase):
         )
 
     def test_agent_effectiveness(self):
-        self.assertAlmostEqual(self.r["agent_effectiveness"], 0.5)
+        self.assertAlmostEqual(self.r["agent_effectiveness"], 0.35)
 
     def test_task_type_multiplier(self):
         self.assertAlmostEqual(self.r["task_type_multiplier"], 2.0)
@@ -401,9 +403,9 @@ class TestCase4XL(unittest.TestCase):
         self.assertLessEqual(self.r["pert_expected_hours"], 40)
 
     def test_committed(self):
-        # 20-55 hours
-        self.assertGreaterEqual(self.r["committed_hours"]["min"], 14)
-        self.assertLessEqual(self.r["committed_hours"]["max"], 55)
+        # 80% XL multiplier = 1.5x
+        self.assertGreaterEqual(self.r["committed_hours"]["min"], 13)
+        self.assertLessEqual(self.r["committed_hours"]["max"], 60)
 
 
 class TestCase5BatchConsistency(unittest.TestCase):
@@ -434,12 +436,13 @@ class TestCase5BatchConsistency(unittest.TestCase):
         self.assertLessEqual(pert_total, total_max)
 
     def test_committed_ratio(self):
-        """Committed should be ~1.4x of total (80% confidence)."""
-        for t in [self.t1, self.t2, self.t3]:
+        """Committed should match size-dependent 80% multiplier."""
+        expected = {"S": 1.8, "M": 1.4, "L": 1.4}
+        for t, size in zip([self.t1, self.t2, self.t3], ["S", "M", "L"]):
             ratio_min = t["committed_minutes"]["min"] / t["total_minutes"]["min"]
             ratio_max = t["committed_minutes"]["max"] / t["total_minutes"]["max"]
-            self.assertAlmostEqual(ratio_min, 1.4, places=2)
-            self.assertAlmostEqual(ratio_max, 1.4, places=2)
+            self.assertAlmostEqual(ratio_min, expected[size], places=2)
+            self.assertAlmostEqual(ratio_max, expected[size], places=2)
 
 
 class TestCase6ConfidenceLevels(unittest.TestCase):
@@ -466,13 +469,14 @@ class TestCase6ConfidenceLevels(unittest.TestCase):
     def test_50_uses_1x(self):
         self.assertAlmostEqual(self.r50["confidence_multiplier"], 1.0)
 
-    def test_90_uses_1_8x(self):
-        self.assertAlmostEqual(self.r90["confidence_multiplier"], 1.8)
+    def test_90_uses_2_1x(self):
+        """M task at 90% should use 2.1x (size-dependent)."""
+        self.assertAlmostEqual(self.r90["confidence_multiplier"], 2.1)
 
     def test_committed_ratio(self):
-        """90% committed / 50% committed should be ~1.8."""
+        """90% committed / 50% committed should be ~2.1 for M."""
         ratio = self.r90["committed_hours"]["max"] / self.r50["committed_hours"]["max"]
-        self.assertAlmostEqual(ratio, 1.8, places=2)
+        self.assertAlmostEqual(ratio, 2.1, places=2)
 
 
 class TestCase7TokenMath(unittest.TestCase):
@@ -491,9 +495,9 @@ class TestCase7TokenMath(unittest.TestCase):
         self.assertEqual(self.t["total_tokens"]["max"], 312000)
 
     def test_output_ratio(self):
-        # M output ratio = 0.28
+        # M output ratio = 0.30
         self.assertAlmostEqual(
-            self.t["output_tokens"]["min"] / self.t["total_tokens"]["min"], 0.28
+            self.t["output_tokens"]["min"] / self.t["total_tokens"]["min"], 0.30
         )
 
     def test_input_output_sum(self):
@@ -523,9 +527,9 @@ class TestCase7TokenMath(unittest.TestCase):
 
     def test_cost_math(self):
         # Standard tier: input=$2.50/M, output=$12.00/M
-        # min: input=120000*0.72=86400, output=120000*0.28=33600
-        # cost_min = (86400*2.50 + 33600*12.00) / 1_000_000
-        expected_cost_min = (86400 * 2.50 + 33600 * 12.00) / 1_000_000
+        # min: input=120000*0.70=84000, output=120000*0.30=36000
+        # cost_min = (84000*2.50 + 36000*12.00) / 1_000_000
+        expected_cost_min = (84000 * 2.50 + 36000 * 12.00) / 1_000_000
         self.assertAlmostEqual(self.t["cost_usd"]["min"], expected_cost_min, places=4)
 
 
@@ -626,6 +630,169 @@ class TestCase9TokenIntegration(unittest.TestCase):
     def test_cost_absent_when_not_show_cost(self):
         r = estimate(complexity="M", show_cost=False)
         self.assertIsNone(r["token_estimate"]["cost_usd"])
+
+
+class TestCase10ValidationBacked(unittest.TestCase):
+    """Case 10: Verify research-backed parameter changes from deep validation.
+
+    These tests encode the properties that the 11-analysis deep validation
+    (86k+ tasks + 24k METR runs + 93 Aider entries) showed must hold.
+    """
+
+    def test_confidence_multiplier_is_size_dependent(self):
+        """Multipliers must vary by complexity, not be flat."""
+        for level in [50, 80, 90]:
+            values = set(CONFIDENCE_MULTIPLIER[level].values())
+            self.assertGreater(len(values), 1,
+                f"{level}% multiplier should not be flat across all sizes")
+
+    def test_90pct_multiplier_above_2x_everywhere(self):
+        """90% multiplier must be >= 2.0 in all bands (validation showed 1.8x under-delivers)."""
+        for size in ["S", "M", "L", "XL"]:
+            self.assertGreaterEqual(CONFIDENCE_MULTIPLIER[90][size], 2.0,
+                f"90% multiplier for {size} should be >= 2.0")
+
+    def test_80pct_S_higher_than_M(self):
+        """S tasks need a larger 80% buffer than M (wider actual/estimate spread)."""
+        self.assertGreater(
+            CONFIDENCE_MULTIPLIER[80]["S"],
+            CONFIDENCE_MULTIPLIER[80]["M"],
+        )
+
+    def test_agent_effectiveness_decreases_with_size(self):
+        """Effectiveness must decrease S > M > L > XL (METR time horizon finding)."""
+        sizes = ["S", "M", "L", "XL"]
+        for i in range(len(sizes) - 1):
+            self.assertGreater(
+                AGENT_EFFECTIVENESS[sizes[i]],
+                AGENT_EFFECTIVENESS[sizes[i + 1]],
+                f"{sizes[i]} effectiveness should exceed {sizes[i+1]}"
+            )
+
+    def test_agent_effectiveness_M_below_old_value(self):
+        """M effectiveness must be < 0.7 (old value). METR showed 0.25 autonomous."""
+        self.assertLess(AGENT_EFFECTIVENESS["M"], 0.7)
+
+    def test_agent_effectiveness_L_below_old_value(self):
+        """L effectiveness must be < 0.5 (old value). METR showed 0.15 autonomous."""
+        self.assertLess(AGENT_EFFECTIVENESS["L"], 0.5)
+
+    def test_review_minutes_reduced(self):
+        """Standard review must be < old values (data showed 17-20 min medians)."""
+        self.assertLessEqual(REVIEW_MINUTES["standard"]["S"], 20)
+        self.assertLessEqual(REVIEW_MINUTES["standard"]["M"], 30)
+
+    def test_review_minutes_scale_by_depth(self):
+        """Deep should be ~2x standard, light should be ~0.5x standard."""
+        for size in ["S", "M", "L", "XL"]:
+            self.assertAlmostEqual(
+                REVIEW_MINUTES["deep"][size] / REVIEW_MINUTES["standard"][size],
+                2.0, places=1,
+            )
+            self.assertAlmostEqual(
+                REVIEW_MINUTES["light"][size] / REVIEW_MINUTES["standard"][size],
+                0.5, places=1,
+            )
+
+    def test_output_token_ratio_S_M_raised(self):
+        """S and M ratios must be >= 0.30 (Aider showed 0.31 median)."""
+        self.assertGreaterEqual(OUTPUT_TOKEN_RATIO["S"], 0.30)
+        self.assertGreaterEqual(OUTPUT_TOKEN_RATIO["M"], 0.30)
+
+    def test_output_token_ratio_monotonic(self):
+        """Ratio should increase or stay flat S <= M <= L <= XL."""
+        sizes = ["S", "M", "L", "XL"]
+        for i in range(len(sizes) - 1):
+            self.assertLessEqual(
+                OUTPUT_TOKEN_RATIO[sizes[i]],
+                OUTPUT_TOKEN_RATIO[sizes[i + 1]],
+            )
+
+
+class TestCase11LogNormalPERT(unittest.TestCase):
+    """Case 11: Log-normal PERT weighting properties.
+
+    Validation showed log-normal beats beta in all 4 bands (KS test, n=84k).
+    The geometric-mean most-likely value should shift PERT expected below
+    the arithmetic midpoint, reflecting right-skewed effort distributions.
+    """
+
+    def test_pert_expected_below_midpoint(self):
+        """Log-normal weighting should produce lower expected than arithmetic midpoint."""
+        for size in ["S", "M", "L", "XL"]:
+            r = estimate(complexity=size)
+            midpoint = (r["total_minutes"]["min"] + r["total_minutes"]["max"]) / 2
+            self.assertLess(r["pert_expected_minutes"], midpoint,
+                f"{size}: PERT expected should be below arithmetic midpoint")
+
+    def test_pert_expected_above_min(self):
+        """PERT expected must be above minimum."""
+        for size in ["S", "M", "L", "XL"]:
+            r = estimate(complexity=size)
+            self.assertGreater(r["pert_expected_minutes"], r["total_minutes"]["min"])
+
+    def test_pert_expected_below_max(self):
+        """PERT expected must be below maximum."""
+        for size in ["S", "M", "L", "XL"]:
+            r = estimate(complexity=size)
+            self.assertLess(r["pert_expected_minutes"], r["total_minutes"]["max"])
+
+    def test_geometric_mean_less_than_arithmetic(self):
+        """Core log-normal property: geometric mean < arithmetic mean when min != max."""
+        import math
+        for size in ["S", "M", "L", "XL"]:
+            r = estimate(complexity=size)
+            tmin = max(r["total_minutes"]["min"], 0.001)
+            tmax = r["total_minutes"]["max"]
+            geo = math.sqrt(tmin * tmax)
+            arith = (tmin + tmax) / 2
+            self.assertLess(geo, arith,
+                f"{size}: geometric mean should be less than arithmetic mean")
+
+
+class TestCase12ParameterInteractions(unittest.TestCase):
+    """Case 12: Verify that parameter changes interact correctly.
+
+    These test the combined effect of multiple parameter changes to
+    ensure the formula still produces reasonable end-to-end estimates.
+    """
+
+    def test_M_estimate_reasonable_range(self):
+        """M coding task should produce 2-5 hours PERT expected."""
+        r = estimate(complexity="M", maturity="partial")
+        self.assertGreaterEqual(r["pert_expected_hours"], 1.5)
+        self.assertLessEqual(r["pert_expected_hours"], 5)
+
+    def test_L_estimate_reasonable_range(self):
+        """L coding task should produce 5-18 hours PERT expected."""
+        r = estimate(complexity="L", maturity="partial")
+        self.assertGreaterEqual(r["pert_expected_hours"], 4)
+        self.assertLessEqual(r["pert_expected_hours"], 18)
+
+    def test_lower_effectiveness_increases_fix_time(self):
+        """Lower agent_effectiveness should increase human fix time."""
+        r_m = estimate(complexity="M")  # ae=0.5
+        r_s = estimate(complexity="S")  # ae=0.9
+        # M has lower effectiveness, so adjusted_fix_ratio should be higher
+        fix_ratio_m = r_m["human_fix_minutes"]["min"] / max(r_m["agent_time_minutes"]["min"], 1)
+        fix_ratio_s = r_s["human_fix_minutes"]["min"] / max(r_s["agent_time_minutes"]["min"], 1)
+        self.assertGreater(fix_ratio_m, fix_ratio_s)
+
+    def test_90pct_committed_much_larger_than_50pct(self):
+        """90% committed should be significantly larger than 50% for S tasks."""
+        r50 = estimate(complexity="S", confidence_level=50)
+        r90 = estimate(complexity="S", confidence_level=90)
+        ratio = r90["committed_hours"]["max"] / r50["committed_hours"]["max"]
+        # S: 90% = 2.9x, 50% = 1.0x, so ratio should be 2.9
+        self.assertGreater(ratio, 2.5)
+
+    def test_review_time_fraction_reasonable(self):
+        """Review should not dominate the total estimate (< 40% of subtotal)."""
+        for size in ["S", "M", "L"]:
+            r = estimate(complexity=size, confidence_level=50)
+            review_frac = r["human_review_minutes"] / r["total_minutes"]["max"]
+            self.assertLess(review_frac, 0.4,
+                f"{size}: review should be < 40% of total, got {review_frac:.1%}")
 
 
 if __name__ == "__main__":

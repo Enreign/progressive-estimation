@@ -1,0 +1,11 @@
+category,task,description,input_tokens,output_tokens_normal,output_tokens_reasoning
+Coding,Write a Short Script,Python script 20-50 lines,100,300,1500
+Coding,Debug a Code Snippet,Find and fix a bug in existing code,200,250,2000
+Coding,Code Review,Review code for issues and improvements,500,400,2500
+Coding,Refactor Code,Restructure existing code for clarity,600,500,3000
+Coding,Write Unit Tests,Generate test cases for existing code,300,500,2500
+Coding,Explain Code,Line-by-line explanation of code,400,600,2000
+Coding,Convert Code Between Languages,Translate code from one language to another,400,500,2500
+Coding,Write Documentation,Generate docstrings and README content,300,600,1800
+Coding,Optimize Code,Improve performance of existing code,500,400,3000
+Coding,Design an API,Design REST API endpoints and schemas,300,500,2500
